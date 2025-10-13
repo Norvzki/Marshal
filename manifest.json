@@ -1,0 +1,36 @@
+{
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp/3rqMNc0q0Qmvq1pEihjcZHWnPVkyVeH24aiFsJAffWGb6k2MDosQ6xRVryK5iV09iQsarzzCStput5kRz82QW35i5a7Eh17dimtk0wiVgHrljQlrGwVfDklH+Zqk2h74TsrfmhEPKM160JXskNSzZnlM0z/IiqLnrbgLTrTPINPzXicYmSLwOdIQLgK2Q4v7uKwE6SNjiJxAh7uJNVu1I3FrdwehIooEC6XxZ0m5ZcM82QwMgaCqjUnVI0ietAjX5eel9gUcjLsHXU4yfRelSl159YcHhBIok44KBgXpuVaTBTmGwulUrDrTytYAIkRl3etX9p2dHjKPo7XlOc3wIDAQAB",
+  "manifest_version": 3,
+  "name": "Google Classroom To-Do List",
+  "version": "1.0.0",
+  "description": "View your Google Classroom assignments and to-dos",
+  "permissions": [
+    "identity"
+  ],
+  "host_permissions": [
+    "https://classroom.googleapis.com/*"
+  ],
+  "oauth2": {
+    "client_id": "833672454067-fbhd7duf8t2gsb1fbqftp6g7phk6fknt.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/classroom.courses.readonly",
+      "https://www.googleapis.com/auth/classroom.coursework.me.readonly",
+      "https://www.googleapis.com/auth/classroom.student-submissions.me.readonly",
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile"
+    ]
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}
