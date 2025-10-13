@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marshal</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📚 Marshal</h1>
+      <button id="refreshBtn" class="refresh-btn" title="Refresh assignments">
+        🔄
+      </button>
+    </header>
+
+    <div id="loadingState" class="loading">
+      <div class="spinner"></div>
+      <p>Loading assignments...</p>
+    </div>
+
+    <div id="errorState" class="error" style="display: none;">
+      <p id="errorMessage"></p>
+      <button id="retryBtn" class="btn">Retry</button>
+    </div>
+
+    <div id="filterSection" style="display: none;">
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">All</button>
+        <button class="filter-tab" data-filter="upcoming">Upcoming</button>
+        <button class="filter-tab" data-filter="overdue">Overdue</button>
+        <button class="filter-tab" data-filter="completed">Completed</button>
+      </div>
+    </div>
+
+    <div id="assignmentsList" class="assignments-list" style="display: none;">
+      <!-- Assignments will be inserted here -->
+    </div>
+
+    <div id="emptyState" class="empty-state" style="display: none;">
+      <p>🎉 No assignments found!</p>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
