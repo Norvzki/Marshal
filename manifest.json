@@ -1,13 +1,12 @@
 {
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp/3rqMNc0q0Qmvq1pEihjcZHWnPVkyVeH24aiFsJAffWGb6k2MDosQ6xRVryK5iV09iQsarzzCStput5kRz82QW35i5a7Eh17dimtk0wiVgHrljQlrGwVfDklH+Zqk2h74TsrfmhEPKM160JXskNSzZnlM0z/IiqLnrbgLTrTPINPzXicYmSLwOdIQLgK2Q4v7uKwE6SNjiJxAh7uJNVu1I3FrdwehIooEC6XxZ0m5ZcM82QwMgaCqjUnVI0ietAjX5eel9gUcjLsHXU4yfRelSl159YcHhBIok44KBgXpuVaTBTmGwulUrDrTytYAIkRl3etX9p2dHjKPo7XlOc3wIDAQAB",
   "manifest_version": 3,
-  "name": "Google Classroom To-Do List",
+  "name": "Marshal",
   "version": "1.0.0",
-  "description": "View your Google Classroom assignments and to-dos",
-  "permissions": [
-    "identity"
-  ],
+  "description": "Your trusty GClassroom AI Assistant",
+  "permissions": ["storage", "tabs", "webNavigation", "identity"],
   "host_permissions": [
+    "https://classroom.google.com/*",
     "https://classroom.googleapis.com/*"
   ],
   "oauth2": {
@@ -23,14 +22,23 @@
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icon16.png",
-      "48": "icon48.png",
-      "128": "icon128.png"
+      "16": "icons/marshal-logo.svg",
+      "48": "icons/marshal-logo.svg",
+      "128": "icons/marshal-logo.svg"
     }
   },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
   "icons": {
-    "16": "icon16.png",
-    "48": "icon48.png",
-    "128": "icon128.png"
+    "16": "icons/marshal-logo.svg",
+    "48": "icons/marshal-logo.svg",
+    "128": "icons/marshal-logo.svg"
   }
 }

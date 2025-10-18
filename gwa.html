@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My GWA</title>
+  <link rel="stylesheet" href="popup.css">
+  <style>
+    .gwa-container {
+      padding: 24px;
+    }
+
+    .back-btn {
+      background: none;
+      border: none;
+      color: #6b7280;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      padding: 8px;
+      transition: color 0.2s;
+    }
+
+    .back-btn:hover {
+      color: #374151;
+    }
+
+    .gwa-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .gwa-display {
+      font-size: 72px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .gwa-label {
+      font-size: 18px;
+      color: #6b7280;
+      font-weight: 600;
+    }
+
+    .grades-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .grade-item {
+      background: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .grade-subject {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .grade-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #3b82f6;
+    }
+
+    .no-grades {
+      text-align: center;
+      padding: 60px 20px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="gwa-container">
+      <button class="back-btn" id="backBtn">← Back to Home</button>
+      
+      <div class="gwa-header">
+        <div class="gwa-display" id="gwaDisplay">--</div>
+        <p class="gwa-label">General Weighted Average</p>
+      </div>
+      
+      <div class="grades-list" id="gradesList">
+        <div class="no-grades">
+          <p>No grades available yet. Connect to Google Classroom to sync your grades.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="gwa.js"></script>
+</body>
+</html>

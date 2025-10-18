@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Urgent Tasks</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="study-plans.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div>
+        <h1 class="title">Marshal</h1>
+        <p class="subtitle">Your trusty GClassroom AI Assistant</p>
+      </div>
+      <button class="close-btn" id="closeBtn">✕</button>
+    </header>
+
+    <div class="content">
+      <div class="top-bar">
+        <h2 class="page-title">Urgent Tasks</h2>
+        <button class="back-btn" id="backBtn">
+          Back to Home
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="tasks-list" id="tasksList"></div>
+    </div>
+  </div>
+
+  <script src="urgent-tasks.js"></script>
+</body>
+</html>

@@ -4,42 +4,101 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Marshal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>📚 Marshal</h1>
-      <button id="refreshBtn" class="refresh-btn" title="Refresh assignments">
-        🔄
-      </button>
+    <header class="header">
+      <div>
+        <h1 class="title">Marshal</h1>
+        <p class="subtitle">Your trusty GClassroom AI Assistant</p>
+      </div>
+      <button class="close-btn" id="closeBtn">✕</button>
     </header>
 
-    <div id="loadingState" class="loading">
-      <div class="spinner"></div>
-      <p>Loading assignments...</p>
-    </div>
-
-    <div id="errorState" class="error" style="display: none;">
-      <p id="errorMessage"></p>
-      <button id="retryBtn" class="btn">Retry</button>
-    </div>
-
-    <div id="filterSection" style="display: none;">
-      <div class="filter-tabs">
-        <button class="filter-tab active" data-filter="all">All</button>
-        <button class="filter-tab" data-filter="upcoming">Upcoming</button>
-        <button class="filter-tab" data-filter="overdue">Overdue</button>
-        <button class="filter-tab" data-filter="completed">Completed</button>
+    <div class="hero-section">
+      <div class="quote-container">
+        <p class="quote" id="dailyQuote">Loading quote...</p>
+      </div>
+      
+      <div class="study-mode-container">
+        <button class="study-mode-btn" id="studyModeBtn" data-active="false">
+          <span class="status-text">OFF</span>
+        </button>
+        <p class="study-mode-label">Enable study mode</p>
       </div>
     </div>
 
-    <div id="assignmentsList" class="assignments-list" style="display: none;">
-      <!-- Assignments will be inserted here -->
+    <section class="study-plans-section">
+      <h2 class="section-title">STUDY PLANS</h2>
+      <div class="button-group">
+        <button class="plan-btn plan-btn-primary" id="viewAllBtn">View All</button>
+        <button class="plan-btn plan-btn-secondary" id="incompleteBtn">Incomplete</button>
+        <button class="plan-btn plan-btn-secondary" id="completedBtn">Completed</button>
+      </div>
+    </section>
+
+    <div class="tasks-grid">
+      <div class="task-card">
+        <div class="task-header">
+          <h3 class="task-title">URGENT TASKS</h3>
+          <button class="nav-btn" id="urgentTasksBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+        <div class="task-list" id="urgentTasksList">
+          <p class="no-tasks">No urgent tasks</p>
+        </div>
+      </div>
+
+      <div class="task-card">
+        <div class="task-header">
+          <h3 class="task-title">MISSED TASKS</h3>
+          <button class="nav-btn" id="missedTasksBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+        <div class="task-list" id="missedTasksList">
+          <p class="no-tasks">No missed tasks</p>
+        </div>
+      </div>
     </div>
 
-    <div id="emptyState" class="empty-state" style="display: none;">
-      <p>🎉 No assignments found!</p>
+    <button class="gwa-card" id="gwaBtn">
+      <div class="gwa-content">
+        <h3 class="gwa-title">My GWA</h3>
+        <p class="gwa-subtitle">View your grades here</p>
+      </div>
+    </button>
+
+    <!-- Removed the text that was appearing in the extension, properly commented it out -->
+    <!-- Options card appears above the generate button -->
+    <div class="generate-section">
+      <div class="options-card" id="optionsCard">
+        <h2 class="options-title">How do you want to make your study plan?</h2>
+        
+        <button class="option-btn" id="aiGenerateBtn">
+          <h3 class="option-btn-title">Generate using AI</h3>
+          <p class="option-btn-subtitle">Automatically create a study plan with AI.</p>
+        </button>
+
+        <button class="option-btn" id="manualGenerateBtn">
+          <h3 class="option-btn-title">Manually make a plan</h3>
+          <p class="option-btn-subtitle">Add your own tasks and set up their urgency and settings.</p>
+        </button>
+      </div>
+
+      <button class="generate-btn" id="generateBtn">
+        <span>Generate a study plan</span>
+        <span class="sparkles">✨</span>
+      </button>
     </div>
   </div>
 

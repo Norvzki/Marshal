@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generating Study Plan</title>
+  <link rel="stylesheet" href="popup.css">
+  <style>
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 600px;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .spinner {
+      width: 80px;
+      height: 80px;
+      border: 6px solid #f3f4f6;
+      border-top: 6px solid #d946ef;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 32px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-title {
+      font-size: 24px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #d946ef 0%, #c026d3 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+
+    .loading-subtitle {
+      font-size: 16px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <h1 class="loading-title">Generating a study plan for you</h1>
+      <p class="loading-subtitle">This may take a few moments...</p>
+    </div>
+  </div>
+
+  <script src="loading.js"></script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Site Blocked - Study Mode</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: white;
+    }
+
+    .container {
+      text-align: center;
+      max-width: 600px;
+      padding: 40px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .icon {
+      font-size: 80px;
+      margin-bottom: 20px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    h1 {
+      font-size: 36px;
+      margin-bottom: 16px;
+      font-weight: 700;
+    }
+
+    p {
+      font-size: 18px;
+      margin-bottom: 30px;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+
+    .quote {
+      font-style: italic;
+      font-size: 16px;
+      margin: 30px 0;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      border-left: 4px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .btn {
+      background: white;
+      color: #667eea;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .stats {
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      display: block;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      opacity: 0.8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">🎯</div>
+    <h1>Study Mode Active</h1>
+    <p>This site is blocked to help you stay focused on your studies.</p>
+    
+    <div class="quote">
+      <p id="motivationalQuote">"The secret of getting ahead is getting started."</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-value" id="blockedCount">0</span>
+        <span class="stat-label">Sites Blocked</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="studyTime">0h</span>
+        <span class="stat-label">Study Time</span>
+      </div>
+    </div>
+
+    <button class="btn" id="openMarshal">Open Marshal</button>
+  </div>
+
+  <script>
+    const quotes = [
+      "The secret of getting ahead is getting started.",
+      "Don't watch the clock; do what it does. Keep going.",
+      "Success is the sum of small efforts repeated day in and day out.",
+      "Stay focused and keep learning!",
+      "The future depends on what you do today.",
+      "Your limitation—it's only your imagination.",
+      "Great things never come from comfort zones."
+    ];
+
+    // Random quote
+    const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+    document.getElementById('motivationalQuote').textContent = `"${randomQuote}"`;
+
+    // Load stats
+    chrome.storage.local.get(['blockedSitesCount', 'studyStartTime'], (result) => {
+      const count = result.blockedSitesCount || 0;
+      document.getElementById('blockedCount').textContent = count;
+
+      if (result.studyStartTime) {
+        const hours = Math.floor((Date.now() - result.studyStartTime) / (1000 * 60 * 60));
+        document.getElementById('studyTime').textContent = hours + 'h';
+      }
+
+      // Increment blocked count
+      chrome.storage.local.set({ blockedSitesCount: count + 1 });
+    });
+
+    // Open Marshal button
+    document.getElementById('openMarshal').addEventListener('click', () => {
+      chrome.runtime.openOptionsPage();
+    });
+  </script>
+</body>
+</html>

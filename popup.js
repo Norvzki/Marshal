@@ -1,160 +1,109 @@
-// State management
-let allAssignments = [];
-let currentFilter = 'all';
-
-// DOM elements
-const loadingState = document.getElementById('loadingState');
-const errorState = document.getElementById('errorState');
-const errorMessage = document.getElementById('errorMessage');
-const assignmentsList = document.getElementById('assignmentsList');
-const emptyState = document.getElementById('emptyState');
-const filterSection = document.getElementById('filterSection');
-const refreshBtn = document.getElementById('refreshBtn');
-const retryBtn = document.getElementById('retryBtn');
-
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-  loadAssignments();
-  setupEventListeners();
-});
-
-function setupEventListeners() {
-  refreshBtn.addEventListener('click', () => {
-    loadAssignments();
-  });
-
-  retryBtn.addEventListener('click', () => {
-    loadAssignments();
-  });
-
-  document.querySelectorAll('.filter-tab').forEach(tab => {
-    tab.addEventListener('click', (e) => {
-      currentFilter = e.target.dataset.filter;
-      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-      e.target.classList.add('active');
-      renderAssignments();
-    });
-  });
-}
+// Google Classroom API Integration
+let allAssignments = []
 
 // Authentication
 function getAuthToken() {
   return new Promise((resolve, reject) => {
-    chrome.identity.getAuthToken({ interactive: true }, (token) => {
-      if (chrome.runtime.lastError) {
-        reject(chrome.runtime.lastError);
+    window.chrome.identity.getAuthToken({ interactive: true }, (token) => {
+      if (window.chrome.runtime.lastError) {
+        reject(window.chrome.runtime.lastError)
       } else {
-        resolve(token);
+        resolve(token)
       }
-    });
-  });
+    })
+  })
 }
 
 // API calls
 async function fetchCourses(token) {
-  const response = await fetch(
-    'https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE',
-    {
-      headers: { Authorization: `Bearer ${token}` }
-    }
-  );
-  
+  const response = await fetch("https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE", {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
   if (!response.ok) {
-    throw new Error(`Failed to fetch courses: ${response.statusText}`);
+    throw new Error(`Failed to fetch courses: ${response.statusText}`)
   }
-  
-  return response.json();
+
+  return response.json()
 }
 
 async function fetchCourseWork(token, courseId) {
-  const response = await fetch(
-    `https://classroom.googleapis.com/v1/courses/${courseId}/courseWork`,
-    {
-      headers: { Authorization: `Bearer ${token}` }
-    }
-  );
-  
+  const response = await fetch(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
   if (!response.ok) {
     if (response.status === 404) {
-      return { courseWork: [] };
+      return { courseWork: [] }
     }
-    throw new Error(`Failed to fetch coursework: ${response.statusText}`);
+    throw new Error(`Failed to fetch coursework: ${response.statusText}`)
   }
-  
-  return response.json();
+
+  return response.json()
 }
 
 async function fetchSubmissionStatus(token, courseId, courseWorkId) {
   try {
-    // Fetch submissions without userId to get current user's submission
     const response = await fetch(
       `https://classroom.googleapis.com/v1/courses/${courseId}/courseWork/${courseWorkId}/studentSubmissions`,
       {
-        headers: { Authorization: `Bearer ${token}` }
-      }
-    );
-    
-    if (!response.ok) return null;
-    
-    const data = await response.json();
-    const submissions = data.studentSubmissions || [];
-    
-    // Find the submission for the current user (usually the first one)
-    // Try to find one with state TURNED_IN or RETURNED first
-    let submission = submissions.find(s => 
-      s.state === 'TURNED_IN' || 
-      s.state === 'RETURNED' || 
-      s.state === 'RECLAIMED_BY_STUDENT'
-    );
-    
-    // If not found, use the first submission
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    )
+
+    if (!response.ok) return null
+
+    const data = await response.json()
+    const submissions = data.studentSubmissions || []
+
+    let submission = submissions.find(
+      (s) => s.state === "TURNED_IN" || s.state === "RETURNED" || s.state === "RECLAIMED_BY_STUDENT",
+    )
+
     if (!submission && submissions.length > 0) {
-      submission = submissions[0];
+      submission = submissions[0]
     }
-    
-    console.log('Submission state:', submission?.state, 'for courseWork:', courseWorkId);
-    return submission;
+
+    return submission
   } catch (e) {
-    console.error('Error fetching submission:', e);
-    return null;
+    console.error("Error fetching submission:", e)
+    return null
   }
 }
 
-// Main loading function
-async function loadAssignments() {
-  showLoading();
-  
+// Load assignments from Google Classroom
+async function loadGoogleClassroomData() {
   try {
-    const token = await getAuthToken();
-    const coursesData = await fetchCourses(token);
-    
+    console.log("[Marshal] Fetching Google Classroom data...")
+    const token = await getAuthToken()
+    const coursesData = await fetchCourses(token)
+
     if (!coursesData.courses || coursesData.courses.length === 0) {
-      showEmpty();
-      return;
+      console.log("[Marshal] No courses found")
+      return
     }
-    
-    allAssignments = [];
-    
+
+    allAssignments = []
+
     for (const course of coursesData.courses) {
-      const courseWorkData = await fetchCourseWork(token, course.id);
-      
+      const courseWorkData = await fetchCourseWork(token, course.id)
+
       if (courseWorkData.courseWork) {
         for (const work of courseWorkData.courseWork) {
-          // Fetch submission status without needing user ID
-          const submission = await fetchSubmissionStatus(token, course.id, work.id);
-          
-          // Better submission state detection
-          const submissionState = submission?.state || 'NEW';
-          const isTurnedIn = submissionState === 'TURNED_IN' || 
-                            submissionState === 'RETURNED' || 
-                            submissionState === 'RECLAIMED_BY_STUDENT';
-          
+          const submission = await fetchSubmissionStatus(token, course.id, work.id)
+
+          const submissionState = submission?.state || "NEW"
+          const isTurnedIn =
+            submissionState === "TURNED_IN" ||
+            submissionState === "RETURNED" ||
+            submissionState === "RECLAIMED_BY_STUDENT"
+
           const assignment = {
             courseId: course.id,
             courseName: course.name,
             courseWorkId: work.id,
             title: work.title,
-            description: work.description || 'No description',
+            description: work.description || "No description",
             dueDate: work.dueDate,
             dueTime: work.dueTime,
             link: work.alternateLink,
@@ -163,227 +112,215 @@ async function loadAssignments() {
             submissionState: submissionState,
             turnedIn: isTurnedIn,
             submissionTime: submission?.updateTime || submission?.creationTime,
-            creationTime: work.creationTime
-          };
-          
-          allAssignments.push(assignment);
+            creationTime: work.creationTime,
+          }
+
+          allAssignments.push(assignment)
         }
       }
     }
-    
-    // Sort by due date (earliest first)
-    allAssignments.sort((a, b) => {
-      if (!a.dueDate) return 1;
-      if (!b.dueDate) return -1;
-      return compareDates(a.dueDate, b.dueDate);
-    });
-    
-    if (allAssignments.length === 0) {
-      showEmpty();
+
+    // Process and categorize assignments
+    await categorizeAssignments()
+    console.log("[Marshal] Google Classroom data loaded successfully")
+  } catch (error) {
+    console.error("[Marshal] Error loading Google Classroom data:", error)
+  }
+}
+
+// Categorize assignments into urgent and missed
+async function categorizeAssignments() {
+  const now = new Date()
+  const urgentTasks = []
+  const missedTasks = []
+
+  for (const assignment of allAssignments) {
+    if (assignment.turnedIn) continue // Skip completed assignments
+
+    if (!assignment.dueDate) continue
+
+    const dueDate = new Date(
+      assignment.dueDate.year,
+      assignment.dueDate.month - 1,
+      assignment.dueDate.day,
+      assignment.dueTime?.hours || 23,
+      assignment.dueTime?.minutes || 59,
+    )
+
+    const diffTime = dueDate - now
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+    const task = {
+      title: assignment.title,
+      subject: assignment.courseName,
+      dueDate: dueDate.toISOString(),
+      urgency: diffDays <= 1 ? "high" : diffDays <= 3 ? "medium" : "low",
+      link: assignment.link,
+    }
+
+    if (diffTime < 0) {
+      missedTasks.push(task)
+    } else if (diffDays <= 7) {
+      urgentTasks.push(task)
+    }
+  }
+
+  // Save to storage
+  await window.chrome.storage.local.set({
+    urgentTasks: urgentTasks,
+    missedTasks: missedTasks,
+  })
+
+  console.log(`[Marshal] Categorized: ${urgentTasks.length} urgent, ${missedTasks.length} missed`)
+}
+
+// Load daily quote
+async function loadDailyQuote() {
+  try {
+    const response = await fetch("quotes.json")
+    const data = await response.json()
+    const quotes = data.quotes
+
+    const now = new Date()
+    const start = new Date(now.getFullYear(), 0, 0)
+    const diff = now - start
+    const oneDay = 1000 * 60 * 60 * 24
+    const dayOfYear = Math.floor(diff / oneDay)
+
+    const quoteIndex = dayOfYear % quotes.length
+    document.getElementById("dailyQuote").textContent = quotes[quoteIndex]
+  } catch (error) {
+    console.error("[Marshal] Error loading quote:", error)
+    document.getElementById("dailyQuote").textContent = "Stay focused and keep learning!"
+  }
+}
+
+// Study mode toggle
+const studyModeBtn = document.getElementById("studyModeBtn")
+studyModeBtn.addEventListener("click", async () => {
+  const isActive = studyModeBtn.dataset.active === "true"
+  const newState = !isActive
+
+  studyModeBtn.dataset.active = newState
+  studyModeBtn.querySelector(".status-text").textContent = newState ? "ON" : "OFF"
+
+  await window.chrome.storage.local.set({ studyModeActive: newState })
+  window.chrome.runtime.sendMessage({ action: "toggleStudyMode", active: newState })
+})
+
+// Load study mode state
+async function loadStudyModeState() {
+  const result = await window.chrome.storage.local.get("studyModeActive")
+  const isActive = result.studyModeActive || false
+  studyModeBtn.dataset.active = isActive
+  studyModeBtn.querySelector(".status-text").textContent = isActive ? "ON" : "OFF"
+}
+
+// Load tasks from storage (updated by Google Classroom sync)
+async function loadTasks() {
+  try {
+    const result = await window.chrome.storage.local.get(["urgentTasks", "missedTasks"])
+
+    const urgentTasksList = document.getElementById("urgentTasksList")
+    const missedTasksList = document.getElementById("missedTasksList")
+
+    let filteredUrgentTasks = []
+    if (result.urgentTasks && result.urgentTasks.length > 0) {
+      const highUrgency = result.urgentTasks.filter((task) => task.urgency === "high")
+      const mediumUrgency = result.urgentTasks.filter((task) => task.urgency === "medium")
+      const lowUrgency = result.urgentTasks.filter((task) => task.urgency === "low")
+
+      filteredUrgentTasks = [...highUrgency, ...mediumUrgency, ...lowUrgency]
+    }
+
+    // Display urgent tasks
+    if (filteredUrgentTasks.length > 0) {
+      urgentTasksList.innerHTML = filteredUrgentTasks
+        .slice(0, 3)
+        .map((task) => `<div class="task-item urgent">${task.title}</div>`)
+        .join("")
     } else {
-      showAssignments();
-      renderAssignments();
+      urgentTasksList.innerHTML = '<p class="no-tasks">No urgent tasks</p>'
+    }
+
+    // Display missed tasks
+    if (result.missedTasks && result.missedTasks.length > 0) {
+      missedTasksList.innerHTML = result.missedTasks
+        .slice(0, 3)
+        .map((task) => `<div class="task-item missed">${task.title}</div>`)
+        .join("")
+    } else {
+      missedTasksList.innerHTML = '<p class="no-tasks">No missed tasks</p>'
     }
   } catch (error) {
-    console.error('Error loading assignments:', error);
-    showError(error.message);
+    console.error("[Marshal] Error loading tasks:", error)
   }
 }
 
-// Rendering functions
-function renderAssignments() {
-  const filteredAssignments = filterAssignments(allAssignments, currentFilter);
-  
-  if (filteredAssignments.length === 0) {
-    assignmentsList.innerHTML = '<div class="empty-state"><p>No assignments in this category</p></div>';
-    return;
-  }
-  
-  assignmentsList.innerHTML = filteredAssignments.map(assignment => {
-    const dueInfo = getDueInfo(assignment);
-    const cardClass = dueInfo.isOverdue ? 'overdue' : (assignment.turnedIn ? 'completed' : '');
-    
-    return `
-      <div class="assignment-card ${cardClass}">
-        <div class="course-name">${escapeHtml(assignment.courseName)}</div>
-        <div class="assignment-title">${escapeHtml(assignment.title)}</div>
-        ${assignment.description !== 'No description' ? 
-          `<div class="assignment-description">${escapeHtml(truncate(assignment.description, 150))}</div>` : 
-          ''}
-        <div class="assignment-meta">
-          <div class="due-date ${dueInfo.className}">
-            ${dueInfo.icon} ${dueInfo.text}
-          </div>
-          <span class="status-badge ${assignment.turnedIn ? 'turned-in' : 'not-turned-in'}">
-            ${assignment.turnedIn ? '✓ Turned In' : 'Not Turned In'}
-          </span>
-        </div>
-        ${assignment.submissionState !== 'NEW' ? `<div style="font-size: 11px; color: #999; margin-top: 4px;">Status: ${assignment.submissionState}</div>` : ''}
-        <a href="${assignment.link}" target="_blank" class="assignment-link">
-          Open in Classroom →
-        </a>
-      </div>
-    `;
-  }).join('');
-}
+// Navigation handlers
+document.getElementById("incompleteBtn").addEventListener("click", () => {
+  window.location.replace(window.chrome.runtime.getURL("study-plans.html?view=incomplete"))
+})
 
-function filterAssignments(assignments, filter) {
-  switch (filter) {
-    case 'upcoming':
-      return assignments.filter(a => !a.turnedIn && !getDueInfo(a).isOverdue && a.dueDate);
-    case 'overdue':
-      return assignments.filter(a => !a.turnedIn && getDueInfo(a).isOverdue);
-    case 'completed':
-      return assignments.filter(a => a.turnedIn);
-    case 'all':
-    default:
-      return assignments;
-  }
-}
+document.getElementById("completedBtn").addEventListener("click", () => {
+  window.location.replace(window.chrome.runtime.getURL("study-plans.html?view=completed"))
+})
 
-function getDueInfo(assignment) {
-  // If assignment is turned in, show submission date instead of due date status
-  if (assignment.turnedIn && assignment.submissionTime) {
-    const submissionDate = new Date(assignment.submissionTime);
-    return {
-      text: `Submitted ${formatSubmissionDate(submissionDate)}`,
-      icon: '✓',
-      className: 'submitted',
-      isOverdue: false
-    };
-  }
-  
-  if (!assignment.dueDate) {
-    return {
-      text: 'No due date',
-      icon: '📅',
-      className: '',
-      isOverdue: false
-    };
-  }
-  
-  const dueDate = new Date(
-    assignment.dueDate.year,
-    assignment.dueDate.month - 1,
-    assignment.dueDate.day,
-    assignment.dueTime?.hours || 23,
-    assignment.dueTime?.minutes || 59
-  );
-  
-  const now = new Date();
-  const diffTime = dueDate - now;
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  const isOverdue = diffTime < 0;
-  
-  if (isOverdue) {
-    return {
-      text: `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''}`,
-      icon: '⚠️',
-      className: 'overdue',
-      isOverdue: true
-    };
-  } else if (diffDays === 0) {
-    return {
-      text: 'Due today',
-      icon: '🔥',
-      className: 'upcoming',
-      isOverdue: false
-    };
-  } else if (diffDays === 1) {
-    return {
-      text: 'Due tomorrow',
-      icon: '⏰',
-      className: 'upcoming',
-      isOverdue: false
-    };
-  } else if (diffDays <= 7) {
-    return {
-      text: `Due in ${diffDays} days`,
-      icon: '📅',
-      className: 'upcoming',
-      isOverdue: false
-    };
+document.getElementById("urgentTasksBtn").addEventListener("click", () => {
+  window.location.replace(window.chrome.runtime.getURL("urgent-tasks.html"))
+})
+
+document.getElementById("missedTasksBtn").addEventListener("click", () => {
+  window.location.replace(window.chrome.runtime.getURL("missed-tasks.html"))
+})
+
+document.getElementById("viewAllBtn").addEventListener("click", () => {
+  window.location.replace(window.chrome.runtime.getURL("study-plans.html"))
+})
+
+// Generate study plan
+const optionsCard = document.getElementById("optionsCard")
+const generateBtn = document.getElementById("generateBtn")
+
+generateBtn.addEventListener("click", () => {
+  const isActive = optionsCard.classList.contains("active")
+  if (isActive) {
+    optionsCard.classList.remove("active")
   } else {
-    return {
-      text: formatDate(assignment.dueDate),
-      icon: '📅',
-      className: '',
-      isOverdue: false
-    };
+    optionsCard.classList.add("active")
   }
-}
+})
 
-// UI state functions
-function showLoading() {
-  loadingState.style.display = 'block';
-  errorState.style.display = 'none';
-  assignmentsList.style.display = 'none';
-  emptyState.style.display = 'none';
-  filterSection.style.display = 'none';
-}
+document.getElementById("aiGenerateBtn").addEventListener("click", () => {
+  window.location.replace(window.chrome.runtime.getURL("loading.html"))
+})
 
-function showError(message) {
-  loadingState.style.display = 'none';
-  errorState.style.display = 'block';
-  assignmentsList.style.display = 'none';
-  emptyState.style.display = 'none';
-  filterSection.style.display = 'none';
-  errorMessage.textContent = message || 'Failed to load assignments. Please try again.';
-}
+document.getElementById("manualGenerateBtn").addEventListener("click", () => {
+  window.location.replace(window.chrome.runtime.getURL("manual-plan.html"))
+})
 
-function showEmpty() {
-  loadingState.style.display = 'none';
-  errorState.style.display = 'none';
-  assignmentsList.style.display = 'none';
-  emptyState.style.display = 'block';
-  filterSection.style.display = 'none';
-}
+document.getElementById("gwaBtn").addEventListener("click", () => {
+  window.location.replace(window.chrome.runtime.getURL("gwa.html"))
+})
 
-function showAssignments() {
-  loadingState.style.display = 'none';
-  errorState.style.display = 'none';
-  assignmentsList.style.display = 'block';
-  emptyState.style.display = 'none';
-  filterSection.style.display = 'block';
-}
+document.getElementById("closeBtn").addEventListener("click", () => {
+  window.close()
+})
 
-// Utility functions
-function formatDate(dueDate) {
-  if (!dueDate) return 'No due date';
-  const date = new Date(dueDate.year, dueDate.month - 1, dueDate.day);
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function formatSubmissionDate(date) {
-  const now = new Date();
-  const diffTime = now - date;
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+// Initialize
+async function initialize() {
+  console.log("[Marshal] Initializing...")
+  loadDailyQuote()
+  loadStudyModeState()
   
-  if (diffDays === 0) {
-    return 'today';
-  } else if (diffDays === 1) {
-    return 'yesterday';
-  } else if (diffDays < 7) {
-    return `${diffDays} days ago`;
-  } else {
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  }
+  // Load Google Classroom data in background
+  loadGoogleClassroomData()
+  
+  // Load existing tasks immediately
+  loadTasks()
+  
+  // Refresh tasks every 30 seconds
+  setInterval(loadTasks, 30000)
 }
 
-function compareDates(date1, date2) {
-  const d1 = new Date(date1.year, date1.month - 1, date1.day);
-  const d2 = new Date(date2.year, date2.month - 1, date2.day);
-  return d1 - d2;
-}
-
-function truncate(str, maxLength) {
-  if (str.length <= maxLength) return str;
-  return str.substring(0, maxLength) + '...';
-}
-
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
+initialize()

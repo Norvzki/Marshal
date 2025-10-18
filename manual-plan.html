@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manual Study Plan - Marshal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="manual-plan.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <button class="back-btn" id="backBtn">← Back</button>
+      <div>
+        <h1 class="page-title">Create Manual Plan</h1>
+      </div>
+      <button class="close-btn" id="closeBtn">✕</button>
+    </header>
+
+    <div class="content">
+      <div class="form-section">
+        <label class="form-label">Plan Name</label>
+        <input type="text" class="form-input" id="planName" placeholder="e.g., Finals Week Study Plan">
+      </div>
+
+      <div class="form-section">
+        <label class="form-label">Tasks</label>
+        <div id="tasksList" class="tasks-list"></div>
+        <button class="add-task-btn" id="addTaskBtn">+ Add Task</button>
+      </div>
+
+      <button class="save-plan-btn" id="savePlanBtn">
+        <span>Save Study Plan</span>
+      </button>
+    </div>
+  </div>
+
+  <script src="manual-plan.js"></script>
+</body>
+</html>

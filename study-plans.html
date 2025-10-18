@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Study Plans</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="study-plans.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div>
+        <h1 class="title">Marshal</h1>
+        <p class="subtitle">Your trusty GClassroom AI Assistant</p>
+      </div>
+      <button class="close-btn" id="closeBtn">✕</button>
+    </header>
+
+    <div class="content">
+      <div class="top-bar">
+        <div class="title-row">
+          <h2 class="page-title">My Study Plans</h2>
+          <button class="icon-btn" id="addPlanBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="16"/>
+              <line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+          </button>
+        </div>
+        <button class="back-btn" id="backBtn">
+          Back to Home
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="section" id="incompleteSection">
+        <div class="section-header">
+          <div>
+            <h3 class="section-title">Incomplete</h3>
+            <p class="section-count" id="incompleteCount">0 Study Plans</p>
+          </div>
+          <button class="expand-btn" id="expandIncomplete">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="section-content" id="incompleteList"></div>
+      </div>
+
+      <div class="section" id="completeSection">
+        <div class="section-header">
+          <div>
+            <h3 class="section-title">Complete</h3>
+            <p class="section-count" id="completeCount">0 Study Plans</p>
+          </div>
+          <button class="expand-btn" id="expandComplete">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="section-content" id="completeList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Added delete confirmation modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal-content">
+      <p class="modal-text">Are you sure you want to delete this study plan?</p>
+      <div class="modal-buttons">
+        <button class="modal-btn confirm-btn" id="confirmDeleteBtn">Yeah, do it!</button>
+        <button class="modal-btn cancel-btn" id="cancelDeleteBtn">No, nevermind.</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="study-plans.js"></script>
+</body>
+</html>
