@@ -42,7 +42,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         hourlyAttempts: {},
         blockedSitesCount: {}
       })
-    }
+    }  
     
     updateBlockingRules()
     sendResponse({ success: true })
