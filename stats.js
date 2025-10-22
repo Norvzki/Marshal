@@ -1,4 +1,4 @@
-// stats.js - Focus Mode Statistics Page Logic with Real-Time Updates
+// stats.js - Focus Mode Statistics Page Logic with Real-Time Updates 
 
 document.addEventListener('DOMContentLoaded', () => {
   // Initial load
