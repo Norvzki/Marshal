@@ -1,4 +1,4 @@
-// Content script for Marshal
+// Content script for Marshal 
 console.log("[Marshal Content] Content script loaded")
 
 // Check if we're on Google Classroom
