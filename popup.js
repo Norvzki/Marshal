@@ -568,7 +568,9 @@ async function fetchSubmissionStatus(token, courseId, courseWorkId) {
 
 async function loadGoogleClassroomData() {
   try {
-    console.log("[Marshal] Fetching Google Classroom data...")
+    console.log("[Marshal] ⚡ Starting FAST sync...")
+    const startTime = Date.now()
+    
     const token = await getAuthToken()
     const coursesData = await fetchCourses(token)
 
@@ -577,47 +579,70 @@ async function loadGoogleClassroomData() {
       return
     }
 
-    allAssignments = []
-
-    for (const course of coursesData.courses) {
-      const courseWorkData = await fetchCourseWork(token, course.id)
-
+    console.log(`[Marshal] Found ${coursesData.courses.length} courses`)
+    
+    // OPTIMIZATION: Fetch all coursework in parallel
+    const courseWorkPromises = coursesData.courses.map(course => 
+      fetchCourseWork(token, course.id).then(courseWorkData => ({
+        course,
+        courseWorkData
+      }))
+    )
+    
+    const courseWorkResults = await Promise.all(courseWorkPromises)
+    
+    // OPTIMIZATION: Fetch all submissions in parallel
+    const submissionPromises = []
+    
+    for (const { course, courseWorkData } of courseWorkResults) {
       if (courseWorkData.courseWork) {
         for (const work of courseWorkData.courseWork) {
-          const submission = await fetchSubmissionStatus(token, course.id, work.id)
-
-          const submissionState = submission?.state || "NEW"
-          const isTurnedIn =
-            submissionState === "TURNED_IN" ||
-            submissionState === "RETURNED" ||
-            submissionState === "RECLAIMED_BY_STUDENT"
-
-          const assignment = {
-            courseId: course.id,
-            courseName: course.name,
-            courseWorkId: work.id,
-            title: work.title,
-            description: work.description || "No description",
-            dueDate: work.dueDate,
-            dueTime: work.dueTime,
-            link: work.alternateLink,
-            maxPoints: work.maxPoints,
-            state: work.state,
-            submissionState: submissionState,
-            turnedIn: isTurnedIn,
-            submissionTime: submission?.updateTime || submission?.creationTime,
-            creationTime: work.creationTime,
-          }
-
-          allAssignments.push(assignment)
+          submissionPromises.push(
+            fetchSubmissionStatus(token, course.id, work.id).then(submission => ({
+              course,
+              work,
+              submission
+            }))
+          )
         }
       }
     }
+    
+    console.log(`[Marshal] Fetching ${submissionPromises.length} submissions in parallel...`)
+    const submissionResults = await Promise.all(submissionPromises)
+    
+    // Build assignments array
+    allAssignments = submissionResults.map(({ course, work, submission }) => {
+      const submissionState = submission?.state || "NEW"
+      const isTurnedIn =
+        submissionState === "TURNED_IN" ||
+        submissionState === "RETURNED" ||
+        submissionState === "RECLAIMED_BY_STUDENT"
+
+      return {
+        courseId: course.id,
+        courseName: course.name,
+        courseWorkId: work.id,
+        title: work.title,
+        description: work.description || "No description",
+        dueDate: work.dueDate,
+        dueTime: work.dueTime,
+        link: work.alternateLink,
+        maxPoints: work.maxPoints,
+        state: work.state,
+        submissionState: submissionState,
+        turnedIn: isTurnedIn,
+        submissionTime: submission?.updateTime || submission?.creationTime,
+        creationTime: work.creationTime,
+      }
+    })
 
     await categorizeAssignments()
-    console.log("[Marshal] Google Classroom data loaded successfully")
+    
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2)
+    console.log(`[Marshal] ✅ Sync completed in ${elapsed}s (${allAssignments.length} assignments)`)
   } catch (error) {
-    console.error("[Marshal] Error loading Google Classroom data:", error)
+    console.error("[Marshal] ❌ Sync error:", error)
   }
 }
 
@@ -627,9 +652,17 @@ async function categorizeAssignments() {
   const missedTasks = []
 
   for (const assignment of allAssignments) {
-    if (assignment.turnedIn) continue
+    // UPDATED: Skip turned-in assignments
+    if (assignment.turnedIn) {
+      console.log('[Marshal] Skipping turned-in assignment:', assignment.title)
+      continue
+    }
 
-    if (!assignment.dueDate) continue
+    // UPDATED: Skip assignments without due dates
+    if (!assignment.dueDate) {
+      console.log('[Marshal] Skipping assignment without due date:', assignment.title)
+      continue
+    }
 
     const dueDate = new Date(
       assignment.dueDate.year,
@@ -662,9 +695,8 @@ async function categorizeAssignments() {
     missedTasks: missedTasks,
   })
 
-  console.log(`[Marshal] Categorized: ${urgentTasks.length} urgent, ${missedTasks.length} missed`)
+  console.log(`[Marshal] Categorized: ${urgentTasks.length} urgent, ${missedTasks.length} missed (turned-in assignments excluded)`)
 }
-
 // ===========================
 // GWA PAGE
 // ===========================
