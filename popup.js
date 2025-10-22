@@ -1,5 +1,8 @@
 /* eslint-disable no-undef */
 /* global chrome */
+/** @type {typeof chrome} */
+// @ts-ignore - chrome is a global API provided by the browser extension runtime
+const chrome_api = chrome
 
 // popup.js
 // ===========================
@@ -17,7 +20,8 @@ let expandedSection = null
 let taskCount = 0
 let isSyncing = false
 let syncIntervalId = null
-let lastSyncTime = 0
+const lastSyncTime = 0
+let filterMode = "all"
 
 const SYNC_INTERVALS = {
   15: 15 * 60 * 1000,
@@ -39,6 +43,14 @@ function showPage(pageId) {
 
   if (pageId === "optionsPage") {
     loadOptionsPage()
+  } else if (pageId === "urgentTasksPage") {
+    loadUrgentTasksPage()
+  } else if (pageId === "missedTasksPage") {
+    loadMissedTasksPage()
+  } else if (pageId === "studyPlansPage") {
+    loadStudyPlans()
+  } else if (pageId === "planDetailPage") {
+    loadPlanDetails()
   }
 }
 
@@ -78,6 +90,11 @@ function hideSyncLoadingScreen() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  const syncOverlay = document.getElementById("syncLoadingOverlay")
+  if (syncOverlay) {
+    syncOverlay.classList.add("hidden")
+  }
+
   // Check if we need to open stats page (from blocked.html)
   const result = await chrome.storage.local.get("openStatsOnPopup")
   if (result.openStatsOnPopup) {
@@ -98,6 +115,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // View Focus Mode Stats
   document.getElementById("viewFocusStatsBtn")?.addEventListener("click", () => {
     showPage("focusModeStatsPage")
+    loadFocusModeStats()
   })
 
   // Manage Blocked Sites
@@ -113,7 +131,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     })
   })
 
-  showSyncLoadingScreen()
   initialize()
 })
 
@@ -124,10 +141,7 @@ async function initialize() {
   console.log("[Marshal] Initializing...")
   loadDailyQuote()
   loadStudyModeState()
-  await loadGoogleClassroomData()
   loadTasks()
-
-  hideSyncLoadingScreen()
 
   initializeSyncSystem()
 
@@ -162,10 +176,6 @@ function startAutoSync(frequency) {
 
   console.log(`[Marshal] Auto-sync started with interval: ${intervalMs}ms`)
 
-  // Perform initial sync
-  performSync()
-
-  // Set up recurring sync
   syncIntervalId = setInterval(() => {
     performSync()
   }, intervalMs)
@@ -180,16 +190,23 @@ function stopAutoSync() {
 }
 
 async function performSync() {
-  if (isSyncing) return
-
-  console.log("[Marshal] Starting sync...")
-  lastSyncTime = Date.now()
+  console.log("[Marshal] performSync called")
 
   try {
+    await new Promise((resolve) => setTimeout(resolve, 500)) // Wait for loading screen to show
+
+    console.log("[Marshal] About to call loadGoogleClassroomData")
     await loadGoogleClassroomData()
+
     console.log("[Marshal] Sync completed successfully")
+    await new Promise((resolve) => setTimeout(resolve, 1000)) // Show success message
   } catch (error) {
-    console.error("[Marshal] Sync error:", error)
+    console.error("[Marshal] Sync error in performSync:", error)
+    console.error("[Marshal] Error details:", error.message)
+
+    alert("Sync failed: " + error.message + "\n\nPlease check the console (F12) for more details.")
+
+    throw error
   }
 }
 
@@ -287,10 +304,12 @@ document.getElementById("viewAllBtn")?.addEventListener("click", () => {
 })
 
 document.getElementById("incompleteBtn")?.addEventListener("click", () => {
+  filterMode = "incomplete"
   showPage("studyPlansPage")
 })
 
 document.getElementById("completedBtn")?.addEventListener("click", () => {
+  filterMode = "complete"
   showPage("studyPlansPage")
 })
 
@@ -321,6 +340,8 @@ generateBtn?.addEventListener("click", () => {
 
 document.getElementById("aiGenerateBtn")?.addEventListener("click", () => {
   showPage("loadingPage")
+  // Call the generateStudyPlan function after showing the loading page
+  setTimeout(() => generateStudyPlan(), 500)
 })
 
 document.getElementById("manualGenerateBtn")?.addEventListener("click", () => {
@@ -357,9 +378,29 @@ document.getElementById("autoSyncToggle")?.addEventListener("change", async (e) 
 })
 
 document.getElementById("syncNowBtn")?.addEventListener("click", async () => {
+  if (isSyncing) {
+    console.log("[Marshal] Sync already in progress, ignoring click")
+    return
+  }
+
   console.log("[Marshal] Manual sync triggered")
   showSyncLoadingScreen()
-  await performSync()
+
+  await new Promise((resolve) => setTimeout(resolve, 500))
+
+  try {
+    console.log("[v0] About to call performSync")
+    await performSync()
+    console.log("[v0] performSync completed successfully")
+    console.log("[Marshal] Sync completed, showing success")
+    await loadTasks()
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+  } catch (error) {
+    console.error("[v0] SYNC FAILED - Error:", error)
+    console.error("[v0] Error message:", error.message)
+    alert("Sync failed: " + error.message)
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+  }
   hideSyncLoadingScreen()
 })
 
@@ -568,9 +609,26 @@ async function fetchSubmissionStatus(token, courseId, courseWorkId) {
 
 async function loadGoogleClassroomData() {
   try {
+    console.log("[v0] loadGoogleClassroomData started")
     console.log("[Marshal] Fetching Google Classroom data...")
-    const token = await getAuthToken()
+
+    let token
+    try {
+      token = await getAuthToken()
+      console.log("[v0] Got auth token:", token ? "YES (length: " + token.length + ")" : "NO")
+    } catch (authError) {
+      console.error("[v0] AUTH ERROR:", authError)
+      console.error("[v0] Auth error message:", authError.message)
+      throw new Error("Failed to get authentication token: " + authError.message)
+    }
+
+    if (!token) {
+      throw new Error("No authentication token received")
+    }
+
+    console.log("[v0] Attempting to fetch courses...")
     const coursesData = await fetchCourses(token)
+    console.log("[v0] Fetched courses:", coursesData.courses ? coursesData.courses.length : 0)
 
     if (!coursesData.courses || coursesData.courses.length === 0) {
       console.log("[Marshal] No courses found")
@@ -580,6 +638,7 @@ async function loadGoogleClassroomData() {
     allAssignments = []
 
     for (const course of coursesData.courses) {
+      console.log("[v0] Processing course:", course.name)
       const courseWorkData = await fetchCourseWork(token, course.id)
 
       if (courseWorkData.courseWork) {
@@ -614,10 +673,14 @@ async function loadGoogleClassroomData() {
       }
     }
 
+    console.log("[v0] Total assignments fetched:", allAssignments.length)
     await categorizeAssignments()
     console.log("[Marshal] Google Classroom data loaded successfully")
   } catch (error) {
+    console.error("[v0] loadGoogleClassroomData error:", error)
+    console.error("[v0] Error message:", error.message)
     console.error("[Marshal] Error loading Google Classroom data:", error)
+    throw error
   }
 }
 
@@ -708,8 +771,32 @@ async function loadStudyPlans() {
     const result = await chrome.storage.local.get("studyPlans")
     const plans = result.studyPlans || []
 
-    const incompletePlans = plans.filter((plan) => !plan.completed)
-    const completePlans = plans.filter((plan) => plan.completed)
+    let incompletePlans = plans.filter((plan) => !plan.completed)
+    let completePlans = plans.filter((plan) => plan.completed)
+
+    const currentFilterMode = filterMode
+
+    if (filterMode === "incomplete") {
+      completePlans = []
+    } else if (filterMode === "complete") {
+      incompletePlans = []
+    }
+    // Reset filter mode after applying it
+    filterMode = "all"
+
+    const incompleteSection = document.getElementById("incompleteSection")
+    const completeSection = document.getElementById("completeSection")
+
+    if (currentFilterMode === "incomplete" || (incompletePlans.length > 0 && completePlans.length === 0)) {
+      incompleteSection.style.display = "block"
+      completeSection.style.display = "none"
+    } else if (currentFilterMode === "complete" || (completePlans.length > 0 && incompletePlans.length === 0)) {
+      incompleteSection.style.display = "none"
+      completeSection.style.display = "block"
+    } else {
+      incompleteSection.style.display = "block"
+      completeSection.style.display = "block"
+    }
 
     document.getElementById("incompleteCount").textContent =
       `${incompletePlans.length} Study Plan${incompletePlans.length !== 1 ? "s" : ""}`
@@ -1110,29 +1197,8 @@ async function generateStudyPlan() {
     console.log("[Marshal] Simulating AI processing...")
     await new Promise((resolve) => setTimeout(resolve, 2000))
 
-    const studyPlan = {
-      id: Date.now(),
-      createdAt: new Date().toISOString(),
-      title: `Study Plan - ${new Date().toLocaleDateString()}`,
-      tasks: allTasks,
-      schedule: generateSchedule(allTasks),
-      completed: false,
-      type: "ai",
-    }
-
-    console.log("[Marshal] Study plan created:", studyPlan)
-
-    const existingPlans = await chrome.storage.local.get("studyPlans")
-    const plans = existingPlans.studyPlans || []
-    plans.unshift(studyPlan)
-    await chrome.storage.local.set({ studyPlans: plans })
-
-    console.log("[Marshal] Study plan saved. Total plans:", plans.length)
-
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
-    console.log("[Marshal] Redirecting to study plans view...")
-    showPage("studyPlansPage")
+    await chrome.storage.local.set({ tempAiTasks: allTasks })
+    showPage("aiPlanNamingPage")
   } catch (error) {
     console.error("[Marshal] Error generating study plan:", error)
     alert("Failed to generate study plan. Error: " + error.message)
@@ -1142,25 +1208,49 @@ async function generateStudyPlan() {
   }
 }
 
-function generateSchedule(tasks) {
-  const schedule = []
-  const now = new Date()
+document.getElementById("backFromAiNamingBtn")?.addEventListener("click", () => {
+  showPage("homePage")
+})
 
-  tasks.forEach((task, index) => {
-    const scheduleDate = new Date(now)
-    scheduleDate.setDate(scheduleDate.getDate() + index)
+document.getElementById("generateAiPlanBtn")?.addEventListener("click", async () => {
+  const planName = document.getElementById("aiPlanName").value.trim()
 
-    schedule.push({
-      task: task.title,
-      date: scheduleDate.toLocaleDateString(),
-      duration: task.taskLength || "1-2 hours",
-      priority: index < 3 ? "High" : "Medium",
+  if (!planName) {
+    alert("Please enter a plan name")
+    return
+  }
+
+  try {
+    const result = await chrome.storage.local.get("tempAiTasks")
+    const allTasks = result.tempAiTasks || []
+
+    const studyPlan = {
+      id: Date.now(),
+      createdAt: new Date().toISOString(),
+      title: planName,
+      tasks: allTasks,
+      schedule: generateSchedule(allTasks),
       completed: false,
-    })
-  })
+      type: "ai",
+    }
 
-  return schedule
-}
+    const existingPlans = await chrome.storage.local.get("studyPlans")
+    const plans = existingPlans.studyPlans || []
+    plans.unshift(studyPlan)
+    await chrome.storage.local.set({ studyPlans: plans })
+    await chrome.storage.local.remove("tempAiTasks")
+
+    document.getElementById("aiPlanName").value = ""
+    showPage("studyPlansPage")
+  } catch (error) {
+    console.error("[Marshal] Error creating AI plan:", error)
+    alert("Failed to create study plan. Error: " + error.message)
+  }
+})
+
+document.getElementById("backToPlansBtn")?.addEventListener("click", () => {
+  showPage("studyPlansPage")
+})
 
 // ===========================
 // PLAN DETAIL PAGE
@@ -1199,6 +1289,15 @@ async function loadPlanDetails() {
     badge.textContent = plan.type === "manual" ? "Manual" : "AI-Generated"
     badge.className = plan.type === "manual" ? "plan-type-badge manual" : "plan-type-badge ai"
 
+    const planDetailContainer = document.querySelector(".plan-detail-container")
+    if (plan.completed) {
+      planDetailContainer.style.background =
+        "linear-gradient(180deg, rgba(134, 239, 172, 0.4) 0%, rgba(187, 247, 208, 0.2) 100%)"
+    } else {
+      planDetailContainer.style.background =
+        "linear-gradient(180deg, rgba(165, 230, 255, 0.4) 0%, rgba(200, 240, 255, 0.2) 100%)"
+    }
+
     renderTasks()
   } catch (error) {
     console.error("[Marshal] Error loading plan details:", error)
@@ -1220,7 +1319,7 @@ function sortTasks(tasks, sortBy) {
       sorted.sort((a, b) => (a.subject || "").localeCompare(b.subject || ""))
       break
     case "length":
-      sorted.sort((a, b) => (Number.parseInt(b.taskLength) || 0) - (Number.parseInt(a.taskLength) || 0))
+      sorted.sort((a, b) => (Number.parseInt(a.taskLength) || 0) - (Number.parseInt(b.taskLength) || 0))
       break
   }
 
@@ -1228,7 +1327,14 @@ function sortTasks(tasks, sortBy) {
 }
 
 function renderTasks() {
-  const sortedTasks = sortTasks(currentTasks, currentSortBy)
+  const allTasks = [...currentTasks]
+  const incompleteTasks = allTasks.filter((t) => !t.completed)
+  const completedTasks = allTasks.filter((t) => t.completed)
+
+  const sortedIncompleteTasks = sortTasks(incompleteTasks, currentSortBy)
+  // Completed tasks stay in their original order
+  const sortedTasks = [...sortedIncompleteTasks, ...completedTasks]
+
   const container = document.getElementById("tasksContainer")
 
   if (sortedTasks.length === 0) {
@@ -1239,10 +1345,14 @@ function renderTasks() {
   container.innerHTML = sortedTasks
     .map((task, index) => {
       const originalIndex = currentTasks.indexOf(task)
+      const completedClass = task.completed ? "completed" : ""
       return `
-        <div class="task-item">
+        <div class="task-item ${completedClass}">
           <div class="task-content">
-            <div class="task-name">${task.title}</div>
+            <div class="task-name-row">
+              <div class="task-name">${task.title}</div>
+              <span class="task-urgency ${task.urgency}">${task.urgency.charAt(0).toUpperCase() + task.urgency.slice(1)} Urgency</span>
+            </div>
             <div class="task-meta">
               <span class="task-meta-item">${task.subject || "No subject"}</span>
               <span class="task-meta-item">•</span>
@@ -1250,8 +1360,7 @@ function renderTasks() {
               <span class="task-meta-item">Due on ${new Date(task.dueDate).toLocaleDateString()}</span>
             </div>
           </div>
-          <span class="task-urgency ${task.urgency}">${task.urgency.charAt(0).toUpperCase() + task.urgency.slice(1)} Urgency</span>
-          <div class="task-actions">
+          <div class="task-actions-inline">
             <button class="task-action-btn edit" data-index="${originalIndex}" title="Edit task">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
@@ -1261,6 +1370,11 @@ function renderTasks() {
             <button class="task-action-btn delete" data-index="${originalIndex}" title="Delete task">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h12zM10 11v6M14 11v6"/>
+              </svg>
+            </button>
+            <button class="task-action-btn done" data-index="${originalIndex}" title="Mark as done">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
             </button>
           </div>
@@ -1282,11 +1396,111 @@ function renderTasks() {
       showDeleteConfirmation("task", index)
     })
   })
+
+  document.querySelectorAll(".task-action-btn.done").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const index = Number.parseInt(e.currentTarget.dataset.index)
+      showRevertModal(index)
+    })
+  })
 }
+
+let revertingTaskIndex = null
+
+function showRevertModal(index) {
+  revertingTaskIndex = index
+  const task = currentTasks[index]
+
+  if (task.completed) {
+    document.getElementById("revertTaskModal").classList.add("active")
+  } else {
+    // Mark as done
+    markTaskAsDone(index)
+  }
+}
+
+async function markTaskAsDone(index) {
+  currentTasks[index].completed = true
+  await savePlanToStorage()
+  await checkAndUpdatePlanCompletion()
+  renderTasks()
+  updatePlanStats()
+}
+
+async function revertTaskToIncomplete() {
+  if (revertingTaskIndex !== null) {
+    currentTasks[revertingTaskIndex].completed = false
+    await savePlanToStorage()
+    await checkAndUpdatePlanCompletion()
+    renderTasks()
+    updatePlanStats()
+  }
+  document.getElementById("revertTaskModal").classList.remove("active")
+  revertingTaskIndex = null
+}
+
+async function checkAndUpdatePlanCompletion() {
+  const result = await chrome.storage.local.get("studyPlans")
+  const plans = result.studyPlans || []
+  const planIndex = plans.findIndex((p) => p.id === Number.parseInt(currentPlanId))
+
+  if (planIndex !== -1) {
+    const plan = plans[planIndex]
+    const allTasksCompleted = currentTasks.length > 0 && currentTasks.every((t) => t.completed)
+    plan.completed = allTasksCompleted
+    await chrome.storage.local.set({ studyPlans: plans })
+
+    // Update the plan card styling if viewing from study plans page
+    const planCard = document.querySelector(`[data-plan-id="${currentPlanId}"]`)
+    if (planCard) {
+      if (allTasksCompleted) {
+        planCard.classList.add("completed")
+      } else {
+        planCard.classList.remove("completed")
+      }
+    }
+
+    const planDetailContainer = document.querySelector(".plan-detail-container")
+    if (planDetailContainer) {
+      if (allTasksCompleted) {
+        planDetailContainer.style.background =
+          "linear-gradient(180deg, rgba(134, 239, 172, 0.4) 0%, rgba(187, 247, 208, 0.2) 100%)"
+      } else {
+        planDetailContainer.style.background =
+          "linear-gradient(180deg, rgba(165, 230, 255, 0.4) 0%, rgba(200, 240, 255, 0.2) 100%)"
+      }
+    }
+  }
+}
+
+function updatePlanStats() {
+  const completedCount = currentTasks.filter((t) => t.completed).length
+  const incompleteCount = currentTasks.length - completedCount
+  document.getElementById("completedCount").textContent = completedCount
+  document.getElementById("incompleteCountDetail").textContent = incompleteCount
+}
+
+document.getElementById("confirmRevertBtn")?.addEventListener("click", revertTaskToIncomplete)
+
+document.getElementById("cancelRevertBtn")?.addEventListener("click", () => {
+  document.getElementById("revertTaskModal").classList.remove("active")
+  revertingTaskIndex = null
+})
+
+document.getElementById("revertTaskModal")?.addEventListener("click", (e) => {
+  if (e.target.id === "revertTaskModal") {
+    document.getElementById("revertTaskModal").classList.remove("active")
+    revertingTaskIndex = null
+  }
+})
+
+let originalTaskData = null
 
 function openEditModal(index) {
   editingTaskIndex = index
   const task = currentTasks[index]
+
+  originalTaskData = JSON.parse(JSON.stringify(task))
 
   document.getElementById("taskNameInput").value = task.title
   document.getElementById("taskSubjectInput").value = task.subject || ""
@@ -1300,12 +1514,44 @@ function openEditModal(index) {
     }
   })
 
+  updateSaveChangesButton()
+
   document.getElementById("editModalOverlay").classList.add("active")
 }
 
 function closeEditModal() {
   document.getElementById("editModalOverlay").classList.remove("active")
   editingTaskIndex = null
+  originalTaskData = null
+}
+
+function hasTaskChanged() {
+  if (!originalTaskData || editingTaskIndex === null) return false
+
+  const currentName = document.getElementById("taskNameInput").value
+  const currentSubject = document.getElementById("taskSubjectInput").value
+  const currentDate = document.getElementById("taskDateInput").value
+  const currentLength = document.getElementById("taskLengthInput").value
+  const currentUrgency = document.querySelector(".urgency-btn.active")?.dataset.urgency
+
+  return (
+    currentName !== originalTaskData.title ||
+    currentSubject !== (originalTaskData.subject || "") ||
+    currentDate !== originalTaskData.dueDate ||
+    currentLength !== (originalTaskData.taskLength || "1 hour") ||
+    currentUrgency !== originalTaskData.urgency
+  )
+}
+
+function updateSaveChangesButton() {
+  const saveBtn = document.getElementById("saveChangesBtn")
+  if (saveBtn) {
+    if (hasTaskChanged()) {
+      saveBtn.classList.remove("hidden")
+    } else {
+      saveBtn.classList.add("hidden")
+    }
+  }
 }
 
 async function saveTask() {
@@ -1401,8 +1647,9 @@ document.getElementById("addTaskDetailBtn")?.addEventListener("click", () => {
     completed: false,
   }
   currentTasks.push(newTask)
-  savePlanToStorage()
-  renderTasks()
+  editingTaskIndex = currentTasks.length - 1
+  originalTaskData = null
+  openEditModal(editingTaskIndex)
 })
 
 document.getElementById("deletePlanBtn")?.addEventListener("click", () => {
@@ -1416,13 +1663,21 @@ document.getElementById("deleteTaskBtn")?.addEventListener("click", () => {
   showDeleteConfirmation("task", editingTaskIndex)
 })
 
+document.getElementById("saveChangesBtn")?.addEventListener("click", saveTask)
+
 document.querySelectorAll(".urgency-btn").forEach((btn) => {
   btn.addEventListener("click", (e) => {
     e.preventDefault()
     document.querySelectorAll(".urgency-btn").forEach((b) => b.classList.remove("active"))
     e.target.classList.add("active")
+    updateSaveChangesButton()
   })
 })
+
+document.getElementById("taskNameInput")?.addEventListener("input", updateSaveChangesButton)
+document.getElementById("taskSubjectInput")?.addEventListener("input", updateSaveChangesButton)
+document.getElementById("taskDateInput")?.addEventListener("change", updateSaveChangesButton)
+document.getElementById("taskLengthInput")?.addEventListener("input", updateSaveChangesButton)
 
 document.getElementById("editForm")?.addEventListener("submit", (e) => {
   e.preventDefault()
@@ -1738,3 +1993,74 @@ function showNotification(message, type = "info") {
     setTimeout(() => notification.remove(), 300)
   }, 3000)
 }
+
+// ===========================
+// AI PLAN NAMING PAGE
+// ===========================
+async function loadAiPlanNamingPage() {
+  try {
+    const result = await chrome.storage.local.get("tempAiTasks")
+    const allTasks = result.tempAiTasks || []
+
+    if (allTasks.length === 0) {
+      document.getElementById("aiPlanName").value = "Untitled Plan"
+      return
+    }
+
+    document.getElementById("aiPlanName").value = `Study Plan - ${new Date().toLocaleDateString()}`
+  } catch (error) {
+    console.error("[Marshal] Error loading AI plan naming page:", error)
+  }
+}
+
+document.getElementById("aiPlanName")?.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") {
+    document.getElementById("generateAiPlanBtn").click()
+  }
+})
+
+// ===========================
+// GENERATE SCHEDULE FUNCTION
+// ===========================
+function generateSchedule(tasks) {
+  const schedule = []
+  const now = new Date()
+
+  tasks.forEach((task, index) => {
+    const scheduleDate = new Date(now)
+    scheduleDate.setDate(scheduleDate.getDate() + index)
+
+    schedule.push({
+      task: task.title,
+      date: scheduleDate.toLocaleDateString(),
+      duration: task.taskLength || "1-2 hours",
+      priority: index < 3 ? "High" : "Medium",
+      completed: false,
+    })
+  })
+
+  return schedule
+}
+
+document.getElementById("focusModeStatsBtn")?.addEventListener("click", () => {
+  showPage("focusModeStatsPage")
+  loadFocusModeStats()
+})
+
+document.getElementById("viewFocusStatsBtn").addEventListener("click", () => {
+  showPage("focusModeStatsPage")
+  loadFocusModeStats()
+})
+
+document.addEventListener("click", (e) => {
+  if (e.target.closest("[data-page='focusModeStatsPage']")) {
+    loadFocusModeStats()
+  }
+})
+
+window.addEventListener("load", () => {
+  const focusStatsPage = document.getElementById("focusModeStatsPage")
+  if (focusStatsPage && !focusStatsPage.classList.contains("hidden")) {
+    loadFocusModeStats()
+  }
+})

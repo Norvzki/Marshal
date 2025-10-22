@@ -10,7 +10,7 @@ const DEFAULT_BLOCKED_SITES = [
   "youtube.com",
   "netflix.com",
   "reddit.com",
-  "twitch.tv", 
+  "twitch.tv",
 ]
 
 let studyModeActive = false
@@ -18,7 +18,7 @@ let customBlockedSites = []
 let disabledDefaultSites = []
 
 // Load study mode state and custom sites on startup
-chrome.storage.local.get(["studyModeActive", "customBlockedSites", "disabledDefaultSites"], (result) => {
+window.chrome.storage.local.get(["studyModeActive", "customBlockedSites", "disabledDefaultSites"], (result) => {
   studyModeActive = result.studyModeActive || false
   customBlockedSites = result.customBlockedSites || []
   disabledDefaultSites = result.disabledDefaultSites || []
@@ -28,22 +28,22 @@ chrome.storage.local.get(["studyModeActive", "customBlockedSites", "disabledDefa
   updateBlockingRules()
 })
 
-// Listen for study mode toggle
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+window.chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "toggleStudyMode") {
     studyModeActive = message.active
     console.log("[Marshal Background] Study mode toggled:", studyModeActive ? "ON" : "OFF")
-    
+
     // Reset stats when enabling study mode
     if (studyModeActive) {
-      chrome.storage.local.set({
+      window.chrome.storage.local.set({
         studyStartTime: Date.now(),
         dailyBlockedAttempts: 0,
         hourlyAttempts: {},
-        blockedSitesCount: {}
+        blockedSitesCount: {},
+        weeklyStats: {},
       })
-    }  
-    
+    }
+
     updateBlockingRules()
     sendResponse({ success: true })
   } else if (message.action === "addCustomSite") {
@@ -56,14 +56,41 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     toggleDefaultSite(message.site)
     sendResponse({ success: true })
   } else if (message.action === "getBlockedSites") {
-    sendResponse({ 
+    sendResponse({
       default: DEFAULT_BLOCKED_SITES,
       custom: customBlockedSites,
-      disabledDefault: disabledDefaultSites
+      disabledDefault: disabledDefaultSites,
     })
-  } else if (message.action === "openStatsPage") {
-    chrome.action.openPopup()
+  } else if (message.action === "openPopup") {
+    window.chrome.action.openPopup()
     sendResponse({ success: true })
+  } else if (message.action === "showPage") {
+    window.chrome.storage.local.set({ currentPage: message.page })
+    sendResponse({ success: true })
+  } else if (message.action === "getStats") {
+    window.chrome.storage.local.get(
+      [
+        "dailyBlockedAttempts",
+        "totalTimeSaved",
+        "hourlyAttempts",
+        "blockedSitesCount",
+        "weeklyStats",
+        "studyStartTime",
+        "lastBlockTime",
+      ],
+      (result) => {
+        sendResponse({
+          dailyBlockedAttempts: result.dailyBlockedAttempts || 0,
+          totalTimeSaved: result.totalTimeSaved || 0,
+          hourlyAttempts: result.hourlyAttempts || {},
+          blockedSitesCount: result.blockedSitesCount || {},
+          weeklyStats: result.weeklyStats || {},
+          studyStartTime: result.studyStartTime || 0,
+          lastBlockTime: result.lastBlockTime || 0,
+        })
+      },
+    )
+    return true
   }
   return true
 })
@@ -71,7 +98,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 async function addCustomBlockedSite(site) {
   if (!customBlockedSites.includes(site)) {
     customBlockedSites.push(site)
-    await chrome.storage.local.set({ customBlockedSites })
+    await window.chrome.storage.local.set({ customBlockedSites })
     if (studyModeActive) {
       updateBlockingRules()
     }
@@ -79,8 +106,8 @@ async function addCustomBlockedSite(site) {
 }
 
 async function removeCustomBlockedSite(site) {
-  customBlockedSites = customBlockedSites.filter(s => s !== site)
-  await chrome.storage.local.set({ customBlockedSites })
+  customBlockedSites = customBlockedSites.filter((s) => s !== site)
+  await window.chrome.storage.local.set({ customBlockedSites })
   if (studyModeActive) {
     updateBlockingRules()
   }
@@ -88,11 +115,11 @@ async function removeCustomBlockedSite(site) {
 
 async function toggleDefaultSite(site) {
   if (disabledDefaultSites.includes(site)) {
-    disabledDefaultSites = disabledDefaultSites.filter(s => s !== site)
+    disabledDefaultSites = disabledDefaultSites.filter((s) => s !== site)
   } else {
     disabledDefaultSites.push(site)
   }
-  await chrome.storage.local.set({ disabledDefaultSites })
+  await window.chrome.storage.local.set({ disabledDefaultSites })
   if (studyModeActive) {
     updateBlockingRules()
   }
@@ -101,27 +128,24 @@ async function toggleDefaultSite(site) {
 // Helper function to check if URL should be blocked
 function shouldBlockUrl(url) {
   if (!studyModeActive) return false
-  
+
   try {
     const urlObj = new URL(url)
     const hostname = urlObj.hostname.toLowerCase()
-    
+
     // Get enabled default sites
-    const enabledDefaultSites = DEFAULT_BLOCKED_SITES.filter(
-      site => !disabledDefaultSites.includes(site)
-    )
-    
+    const enabledDefaultSites = DEFAULT_BLOCKED_SITES.filter((site) => !disabledDefaultSites.includes(site))
+
     const allBlockedSites = [...enabledDefaultSites, ...customBlockedSites]
-    
+
     // Check if hostname matches any blocked site (including subdomains)
-    return allBlockedSites.some(blockedSite => {
+    return allBlockedSites.some((blockedSite) => {
       // Remove www. for comparison
-      const cleanHostname = hostname.replace(/^www\./, '')
-      const cleanBlockedSite = blockedSite.replace(/^www\./, '')
-      
+      const cleanHostname = hostname.replace(/^www\./, "")
+      const cleanBlockedSite = blockedSite.replace(/^www\./, "")
+
       // Check exact match or subdomain match
-      return cleanHostname === cleanBlockedSite || 
-             cleanHostname.endsWith('.' + cleanBlockedSite)
+      return cleanHostname === cleanBlockedSite || cleanHostname.endsWith("." + cleanBlockedSite)
     })
   } catch (e) {
     console.error("[Marshal Background] Error checking URL:", e)
@@ -132,33 +156,31 @@ function shouldBlockUrl(url) {
 // ⚡ MANIFEST V3: Use declarativeNetRequest for instant blocking
 async function updateBlockingRules() {
   console.log("[Marshal Background] Updating blocking rules (Manifest V3)...")
-  
+
   // Remove existing listeners
-  chrome.webNavigation.onBeforeNavigate.removeListener(blockNavigationInstantly)
-  chrome.webNavigation.onCommitted.removeListener(blockCommittedNavigation)
-  
+  window.chrome.webNavigation.onBeforeNavigate.removeListener(blockNavigationInstantly)
+  window.chrome.webNavigation.onCommitted.removeListener(blockCommittedNavigation)
+
   if (studyModeActive) {
     // Get enabled default sites
-    const enabledDefaultSites = DEFAULT_BLOCKED_SITES.filter(
-      site => !disabledDefaultSites.includes(site)
-    )
-    
+    const enabledDefaultSites = DEFAULT_BLOCKED_SITES.filter((site) => !disabledDefaultSites.includes(site))
+
     const allBlockedSites = [...enabledDefaultSites, ...customBlockedSites]
-    
+
     console.log("[Marshal Background] Active blocked sites:", allBlockedSites)
-    
+
     // Use declarativeNetRequest to create blocking rules
     try {
       // First, remove all existing dynamic rules
-      const existingRules = await chrome.declarativeNetRequest.getDynamicRules()
-      const ruleIdsToRemove = existingRules.map(rule => rule.id)
-      
+      const existingRules = await window.chrome.declarativeNetRequest.getDynamicRules()
+      const ruleIdsToRemove = existingRules.map((rule) => rule.id)
+
       if (ruleIdsToRemove.length > 0) {
-        await chrome.declarativeNetRequest.updateDynamicRules({
-          removeRuleIds: ruleIdsToRemove
+        await window.chrome.declarativeNetRequest.updateDynamicRules({
+          removeRuleIds: ruleIdsToRemove,
         })
       }
-      
+
       // Create new rules for each blocked site
       const rules = []
       allBlockedSites.forEach((site, index) => {
@@ -168,47 +190,47 @@ async function updateBlockingRules() {
           priority: 1,
           action: {
             type: "redirect",
-            redirect: { url: chrome.runtime.getURL("blocked.html") }
+            redirect: { url: window.chrome.runtime.getURL("blocked.html") },
           },
           condition: {
             urlFilter: `*://${site}/*`,
-            resourceTypes: ["main_frame"]
-          }
+            resourceTypes: ["main_frame"],
+          },
         })
-        
+
         // Rule for www subdomain
         rules.push({
           id: index * 2 + 2,
           priority: 1,
           action: {
             type: "redirect",
-            redirect: { url: chrome.runtime.getURL("blocked.html") }
+            redirect: { url: window.chrome.runtime.getURL("blocked.html") },
           },
           condition: {
             urlFilter: `*://www.${site}/*`,
-            resourceTypes: ["main_frame"]
-          }
+            resourceTypes: ["main_frame"],
+          },
         })
-        
+
         // Rule for all subdomains
         rules.push({
           id: index * 2 + 3 + 1000,
           priority: 1,
           action: {
             type: "redirect",
-            redirect: { url: chrome.runtime.getURL("blocked.html") }
+            redirect: { url: window.chrome.runtime.getURL("blocked.html") },
           },
           condition: {
             urlFilter: `*://*.${site}/*`,
-            resourceTypes: ["main_frame"]
-          }
+            resourceTypes: ["main_frame"],
+          },
         })
       })
-      
+
       // Add the new rules
       if (rules.length > 0) {
-        await chrome.declarativeNetRequest.updateDynamicRules({
-          addRules: rules
+        await window.chrome.declarativeNetRequest.updateDynamicRules({
+          addRules: rules,
         })
         console.log(`[Marshal Background] ✅ Added ${rules.length} declarativeNetRequest rules`)
       }
@@ -216,21 +238,21 @@ async function updateBlockingRules() {
       console.error("[Marshal Background] ❌ Error setting declarativeNetRequest rules:", error)
       console.log("[Marshal Background] ⚠️ Falling back to webNavigation listeners")
     }
-    
+
     // Also add webNavigation listeners as backup
-    chrome.webNavigation.onBeforeNavigate.addListener(blockNavigationInstantly)
-    chrome.webNavigation.onCommitted.addListener(blockCommittedNavigation)
-    
+    window.chrome.webNavigation.onBeforeNavigate.addListener(blockNavigationInstantly)
+    window.chrome.webNavigation.onCommitted.addListener(blockCommittedNavigation)
+
     console.log("[Marshal Background] Blocking rules activated")
   } else {
     // Remove all dynamic rules when study mode is off
     try {
-      const existingRules = await chrome.declarativeNetRequest.getDynamicRules()
-      const ruleIdsToRemove = existingRules.map(rule => rule.id)
-      
+      const existingRules = await window.chrome.declarativeNetRequest.getDynamicRules()
+      const ruleIdsToRemove = existingRules.map((rule) => rule.id)
+
       if (ruleIdsToRemove.length > 0) {
-        await chrome.declarativeNetRequest.updateDynamicRules({
-          removeRuleIds: ruleIdsToRemove
+        await window.chrome.declarativeNetRequest.updateDynamicRules({
+          removeRuleIds: ruleIdsToRemove,
         })
       }
       console.log("[Marshal Background] All blocking rules removed")
@@ -244,13 +266,13 @@ async function updateBlockingRules() {
 function blockNavigationInstantly(details) {
   // Only process main frame navigations
   if (details.frameId !== 0) return
-  
+
   if (shouldBlockUrl(details.url)) {
     console.log("[Marshal Background] 🚫 BLOCK (Navigation):", details.url)
     trackBlockAttempt(new URL(details.url).hostname)
-    
-    chrome.tabs.update(details.tabId, {
-      url: chrome.runtime.getURL("blocked.html")
+
+    window.chrome.tabs.update(details.tabId, {
+      url: window.chrome.runtime.getURL("blocked.html"),
     })
   }
 }
@@ -259,13 +281,13 @@ function blockNavigationInstantly(details) {
 function blockCommittedNavigation(details) {
   // Only process main frame navigations
   if (details.frameId !== 0) return
-  
+
   if (shouldBlockUrl(details.url)) {
     console.log("[Marshal Background] 🚫 BLOCK (Committed):", details.url)
     trackBlockAttempt(new URL(details.url).hostname)
-    
-    chrome.tabs.update(details.tabId, {
-      url: chrome.runtime.getURL("blocked.html")
+
+    window.chrome.tabs.update(details.tabId, {
+      url: window.chrome.runtime.getURL("blocked.html"),
     })
   }
 }
@@ -275,46 +297,46 @@ async function trackBlockAttempt(hostname) {
   const now = new Date()
   const hour = now.getHours()
   const date = now.toDateString()
-  
-  const result = await chrome.storage.local.get([
-    'dailyBlockedAttempts',
-    'hourlyAttempts',
-    'blockedSitesCount',
-    'weeklyStats',
-    'studyStartTime',
-    'totalTimeSaved'
+
+  const result = await window.chrome.storage.local.get([
+    "dailyBlockedAttempts",
+    "hourlyAttempts",
+    "blockedSitesCount",
+    "weeklyStats",
+    "studyStartTime",
+    "totalTimeSaved",
   ])
-  
+
   // Increment daily attempts
   const dailyAttempts = (result.dailyBlockedAttempts || 0) + 1
-  
+
   // Track hourly attempts
   const hourlyAttempts = result.hourlyAttempts || {}
   hourlyAttempts[hour] = (hourlyAttempts[hour] || 0) + 1
-  
+
   // Track per-site attempts
   const siteCounts = result.blockedSitesCount || {}
   siteCounts[hostname] = (siteCounts[hostname] || 0) + 1
-  
+
   // Track weekly stats
   const weeklyStats = result.weeklyStats || {}
   weeklyStats[date] = (weeklyStats[date] || 0) + 1
-  
+
   // Calculate time saved (assume 5 minutes per block)
   const timeSaved = (result.totalTimeSaved || 0) + 5
-  
-  await chrome.storage.local.set({
+
+  await window.chrome.storage.local.set({
     dailyBlockedAttempts: dailyAttempts,
     hourlyAttempts: hourlyAttempts,
     blockedSitesCount: siteCounts,
     weeklyStats: weeklyStats,
     totalTimeSaved: timeSaved,
-    lastBlockTime: Date.now()
+    lastBlockTime: Date.now(),
   })
 }
 
 // Listen for navigation to blocked sites (for stats tracking)
-chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((details) => {
+window.chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((details) => {
   console.log("[Marshal Background] 🚫 Rule matched:", details)
   // Track the block attempt
   try {
@@ -360,7 +382,7 @@ async function syncGoogleClassroomData() {
             dueDate: work.dueDate,
             dueTime: work.dueTime,
             turnedIn: isTurnedIn,
-            link: work.alternateLink
+            link: work.alternateLink,
           }
 
           allAssignments.push(assignment)
@@ -378,9 +400,9 @@ async function syncGoogleClassroomData() {
 // Helper functions
 function getAuthToken() {
   return new Promise((resolve, reject) => {
-    chrome.identity.getAuthToken({ interactive: false }, (token) => {
-      if (chrome.runtime.lastError) {
-        reject(chrome.runtime.lastError)
+    window.chrome.identity.getAuthToken({ interactive: false }, (token) => {
+      if (window.chrome.runtime.lastError) {
+        reject(window.chrome.runtime.lastError)
       } else {
         resolve(token)
       }
@@ -469,7 +491,7 @@ async function categorizeAndSaveAssignments(assignments) {
       subject: assignment.courseName,
       dueDate: dueDate.toISOString(),
       urgency: diffDays <= 1 ? "high" : diffDays <= 3 ? "medium" : "low",
-      link: assignment.link
+      link: assignment.link,
     }
 
     if (diffTime < 0) {
@@ -479,14 +501,12 @@ async function categorizeAndSaveAssignments(assignments) {
     }
   }
 
-  await chrome.storage.local.set({
+  await window.chrome.storage.local.set({
     urgentTasks: urgentTasks,
     missedTasks: missedTasks,
   })
 }
 
-// Sync every 15 minutes
 setInterval(syncGoogleClassroomData, 15 * 60 * 1000)
 
-// Initial sync after 5 seconds
 setTimeout(syncGoogleClassroomData, 5000)

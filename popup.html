@@ -468,14 +468,14 @@
               </svg>
             </button>
             <div class="sort-dropdown" id="sortDropdown">
-              <button class="sort-option" data-sort="urgency">Urgency</button>
+              <button class="sort-option" data-sort="urgency">Most Urgent</button>
               <button class="sort-option" data-sort="date">Date of Deadline</button>
               <button class="sort-option" data-sort="subject">Subject</button>
               <button class="sort-option" data-sort="length">Estimated Length of Time</button>
             </div>
           </div>
 
-          <button class="back-to-plans-btn" data-page="studyPlansPage">Back to All Plans ←</button>
+          <button class="back-to-plans-btn" id="backToPlansBtn">Back to All Plans ←</button>
         </div>
 
         <div class="tasks-container" id="tasksContainer">
@@ -523,8 +523,19 @@
             </div>
           </div>
 
+          <button type="button" class="save-changes-btn hidden" id="saveChangesBtn">Save Changes</button>
           <button type="button" class="delete-task-btn" id="deleteTaskBtn">Delete Task</button>
         </form>
+      </div>
+    </div>
+
+    <div class="confirmation-modal" id="revertTaskModal">
+      <div class="confirmation-content">
+        <p class="confirmation-text">Revert this task as incomplete?</p>
+        <div class="confirmation-buttons">
+          <button class="btn-cancel" id="cancelRevertBtn">Nope, nevermind</button>
+          <button class="btn-confirm" id="confirmRevertBtn">Yeah!</button>
+        </div>
       </div>
     </div>
 
@@ -535,6 +546,30 @@
           <button class="btn-cancel" id="cancelConfirmBtn">Cancel</button>
           <button class="btn-confirm" id="confirmConfirmBtn">Delete</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI PLAN NAMING PAGE -->
+  <div class="page hidden" id="aiPlanNamingPage">
+    <div class="container">
+      <header class="header">
+        <button class="back-btn" id="backFromAiNamingBtn">← Back</button>
+        <div>
+          <h1 class="page-title">Generate AI Study Plan</h1>
+        </div>
+        <button class="close-btn">✕</button>
+      </header>
+
+      <div class="content">
+        <div class="form-section">
+          <label class="form-label">Plan Name</label>
+          <input type="text" class="form-input" id="aiPlanName" placeholder="e.g., Finals Week Study Plan">
+        </div>
+
+        <button class="save-plan-btn" id="generateAiPlanBtn">
+          <span>Generate AI Study Plan</span>
+        </button>
       </div>
     </div>
   </div>
