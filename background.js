@@ -18,10 +18,16 @@ let customBlockedSites = []
 let disabledDefaultSites = []
 
 // Load study mode state and custom sites on startup
-chrome.storage.local.get(["studyModeActive", "customBlockedSites", "disabledDefaultSites"], (result) => {
+chrome.storage.local.get(["studyModeActive", "customBlockedSites", "disabledDefaultSites", "disabledDefault"], (result) => {
   studyModeActive = result.studyModeActive || false
   customBlockedSites = result.customBlockedSites || []
-  disabledDefaultSites = result.disabledDefaultSites || []
+  // Merge legacy/UI key 'disabledDefault' with canonical 'disabledDefaultSites'
+  const fromCanonical = result.disabledDefaultSites || []
+  const fromUiKey = result.disabledDefault || []
+  disabledDefaultSites = Array.from(new Set([...(fromCanonical || []), ...(fromUiKey || [])]))
+  // Persist merged state back to both keys for consistency
+  chrome.storage.local.set({ disabledDefaultSites, disabledDefault: disabledDefaultSites })
+
   console.log("[Marshal Background] Study mode:", studyModeActive ? "ON" : "OFF")
   console.log("[Marshal Background] Custom blocked sites:", customBlockedSites)
   console.log("[Marshal Background] Disabled default sites:", disabledDefaultSites)
@@ -69,6 +75,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true
   } 
   
+  if (message.action === "disableDefaultSite") {
+    disableDefaultSite(message.site)
+    sendResponse({ success: true })
+    return true
+  }
+  
+  if (message.action === "enableDefaultSite") {
+    enableDefaultSite(message.site)
+    sendResponse({ success: true })
+    return true
+  }
+  
   if (message.action === "getBlockedSites") {
     sendResponse({ 
       default: DEFAULT_BLOCKED_SITES,
@@ -111,10 +129,32 @@ async function toggleDefaultSite(site) {
   } else {
     disabledDefaultSites.push(site)
   }
-  await chrome.storage.local.set({ disabledDefaultSites })
+  await chrome.storage.local.set({ disabledDefaultSites, disabledDefault: disabledDefaultSites })
   console.log("[Marshal Background] Toggled default site:", site, "Disabled:", disabledDefaultSites.includes(site))
   if (studyModeActive) {
     updateBlockingRules()
+  }
+}
+
+async function disableDefaultSite(site) {
+  if (!disabledDefaultSites.includes(site)) {
+    disabledDefaultSites.push(site)
+    await chrome.storage.local.set({ disabledDefaultSites, disabledDefault: disabledDefaultSites })
+    console.log("[Marshal Background] Disabled default site:", site)
+    if (studyModeActive) {
+      updateBlockingRules()
+    }
+  }
+}
+
+async function enableDefaultSite(site) {
+  if (disabledDefaultSites.includes(site)) {
+    disabledDefaultSites = disabledDefaultSites.filter(s => s !== site)
+    await chrome.storage.local.set({ disabledDefaultSites, disabledDefault: disabledDefaultSites })
+    console.log("[Marshal Background] Enabled default site:", site)
+    if (studyModeActive) {
+      updateBlockingRules()
+    }
   }
 }
 
