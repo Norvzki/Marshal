@@ -13,12 +13,8 @@
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 50%, #1f3a2a 100%);
+      background: url('/public/forest-background.png') center/cover fixed;
       background-attachment: fixed;
-      background-image: 
-        linear-gradient(135deg, rgba(26, 71, 42, 0.9) 0%, rgba(45, 90, 61, 0.9) 50%, rgba(31, 58, 42, 0.9) 100%),
-        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><defs><pattern id="forest" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse"><rect fill="%23164e3b" width="200" height="200"/><circle cx="50" cy="50" r="30" fill="%231f3a2a" opacity="0.6"/><circle cx="150" cy="80" r="35" fill="%231f3a2a" opacity="0.5"/><circle cx="100" cy="150" r="28" fill="%231f3a2a" opacity="0.7"/></pattern></defs><rect width="1200" height="800" fill="%231a472a"/><rect width="1200" height="800" fill="url(%23forest)"/></svg>');
-      background-size: cover;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -228,12 +224,14 @@
 
       <div class="button-group">
         <button class="btn btn-analytics" id="viewAnalyticsBtn">
-          <span>📊</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 13h2v8H3zm4-8h2v16H7zm4-2h2v18h-2zm4-2h2v20h-2zm4 4h2v16h-2z" fill="currentColor"/>
+          </svg>
           <span>View Analytics</span>
         </button>
-        <button class="btn btn-marshall" id="openMarshallBtn">
+        <button class="btn btn-marshall" id="openMarshalBtn">
           <span>📖</span>
-          <span>Open Marshall</span>
+          <span>Open Marshal</span>
         </button>
       </div>
     </div>
@@ -265,38 +263,49 @@
         'totalTimeSaved'
       ], (result) => {
         const attempts = result.dailyBlockedAttempts || 0
-        const timeSaved = result.totalTimeSaved || 0
+        const timeSavedMinutes = result.totalTimeSaved || 0
 
-        // Format time saved
-        const hours = Math.floor(timeSaved / 60)
-        const minutes = timeSaved % 60
+        const hours = Math.floor(timeSavedMinutes / 60)
+        const minutes = timeSavedMinutes % 60
+        let timeDisplay = ''
         if (hours > 0) {
-          document.getElementById('timeSavedStat').textContent = `${hours}h ${minutes}m`
+          timeDisplay = `${hours}h ${minutes}m`
+        } else if (minutes > 0) {
+          timeDisplay = `${minutes}m`
         } else {
-          document.getElementById('timeSavedStat').textContent = `${minutes}m`
+          timeDisplay = '0m'
         }
 
+        document.getElementById('timeSavedStat').textContent = timeDisplay
         document.getElementById('blocksMadeStat').textContent = attempts
+        
+        console.log("[v0] Stats loaded - Attempts:", attempts, "Time Saved:", timeSavedMinutes, "Display:", timeDisplay)
       })
     }
 
     document.getElementById('viewAnalyticsBtn').addEventListener('click', () => {
-      chrome.runtime.sendMessage({ action: 'openPopup' }, () => {
+      console.log("[v0] View Analytics clicked")
+      chrome.runtime.sendMessage({ action: 'openPopup' }, (response) => {
+        console.log("[v0] Popup opened, response:", response)
         setTimeout(() => {
-          chrome.storage.local.set({ openStatsOnPopup: true })
-          chrome.runtime.sendMessage({ action: 'showPage', page: 'focusModeStatsPage' })
-        }, 100)
+          chrome.runtime.sendMessage({ action: 'showPage', page: 'focusModeStatsPage' }, (response) => {
+            console.log("[v0] Stats page shown, response:", response)
+          })
+        }, 500)
       })
     })
 
-    document.getElementById('openMarshallBtn').addEventListener('click', () => {
-      chrome.runtime.sendMessage({ action: 'openPopup' })
+    document.getElementById('openMarshalBtn').addEventListener('click', () => {
+      console.log("[v0] Open Marshal clicked")
+      chrome.runtime.sendMessage({ action: 'openPopup' }, (response) => {
+        console.log("[v0] Popup opened, response:", response)
+      })
     })
 
     // Initialize on page load
     loadDailyQuote()
     loadStats()
-    setInterval(loadStats, 2000)
+    setInterval(loadStats, 1000)
   </script>
 </body>
 </html>
