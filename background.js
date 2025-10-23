@@ -289,21 +289,6 @@ async function updateBlockingRules() {
       })
     }
 
-    //Rule for all subdomains
-    // Rule for all subdomains
-        rules.push({
-          id: index * 2 + 3 + 1000,
-          priority: 1,
-          action: {
-            type: "redirect",
-            redirect: { url: chrome.runtime.getURL("blocked.html") }
-          },
-          condition: {
-            urlFilter: `*://*.${site}/*`,
-            resourceTypes: ["main_frame"]
-          }
-        })
-
     // Add all rules at once
     await chrome.declarativeNetRequest.updateDynamicRules({
       addRules: rules
@@ -431,52 +416,66 @@ chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((details) => {
 
 
 // Sync Google Classroom data periodically
+// ✅ IMPROVED VERSION in background.js
 async function syncGoogleClassroomData() {
-  console.log("[Marshal Background] Starting Google Classroom sync...")
-
+  console.log("[Marshal Background] 🚀 Starting optimized sync...")
+  const startTime = Date.now()
+  
   try {
     const token = await getAuthToken()
+    
+    // Step 1: Fetch courses
     const coursesData = await fetchCourses(token)
-
-    if (!coursesData.courses || coursesData.courses.length === 0) {
+    if (!coursesData.courses?.length) {
       console.log("[Marshal Background] No courses found")
       return
     }
 
-    const allAssignments = []
+    // Step 2: Parallel fetch of all coursework
+    const courseWorkPromises = coursesData.courses.map(async (course) => {
+      const courseWork = await fetchCourseWork(token, course.id)
+      return { course, courseWork: courseWork.courseWork || [] }
+    })
+    
+    const allCourseWork = await Promise.all(courseWorkPromises)
 
-    for (const course of coursesData.courses) {
-      const courseWorkData = await fetchCourseWork(token, course.id)
-
-      if (courseWorkData.courseWork) {
-        for (const work of courseWorkData.courseWork) {
-          const submission = await fetchSubmissionStatus(token, course.id, work.id)
-
-          const submissionState = submission?.state || "NEW"
-          const isTurnedIn =
-            submissionState === "TURNED_IN" ||
-            submissionState === "RETURNED" ||
-            submissionState === "RECLAIMED_BY_STUDENT"
-
-          const assignment = {
-            courseId: course.id,
-            courseName: course.name,
-            title: work.title,
-            dueDate: work.dueDate,
-            dueTime: work.dueTime,
-            turnedIn: isTurnedIn,
-            link: work.alternateLink
-          }
-
-          allAssignments.push(assignment)
-        }
+    // Step 3: Parallel fetch of all submissions
+    const submissionPromises = []
+    for (const { course, courseWork } of allCourseWork) {
+      for (const work of courseWork) {
+        submissionPromises.push(
+          fetchSubmissionStatus(token, course.id, work.id).then(submission => ({
+            course,
+            work,
+            submission
+          }))
+        )
       }
     }
 
+    const submissions = await Promise.all(submissionPromises)
+
+    // Step 4: Build assignments
+    const allAssignments = submissions.map(({ course, work, submission }) => ({
+      courseId: course.id,
+      courseName: course.name,
+      courseWorkId: work.id,
+      title: work.title,
+      description: work.description || "No description",
+      dueDate: work.dueDate,
+      dueTime: work.dueTime,
+      link: work.alternateLink,
+      maxPoints: work.maxPoints,
+      turnedIn: ["TURNED_IN", "RETURNED", "RECLAIMED_BY_STUDENT"].includes(submission?.state)
+    }))
+
     await categorizeAndSaveAssignments(allAssignments)
-    console.log("[Marshal Background] Sync completed successfully")
+    
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2)
+    console.log(`[Marshal Background] ✅ Sync completed in ${elapsed}s`)
   } catch (error) {
-    console.error("[Marshal Background] Sync error:", error)
+    console.error("[Marshal Background] ❌ Sync error:", error)
+    throw error
   }
 }
 

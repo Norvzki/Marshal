@@ -22,6 +22,21 @@ let isSyncing = false
 let syncIntervalId = null
 const lastSyncTime = 0
 let filterMode = "all"
+let isAddingTask = false
+
+function formatTimeAgo(timestamp) {
+  if (!timestamp) return "Never synced"
+  const now = Date.now()
+  const diff = now - timestamp
+  const minutes = Math.floor(diff / 60000)
+  
+  if (minutes < 1) return "Just now"
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  return `${days}d ago`
+}
 
 const SYNC_INTERVALS = {
   15: 15 * 60 * 1000,
