@@ -1358,13 +1358,18 @@ function renderTasks() {
     .map((task, index) => {
       const originalIndex = currentTasks.indexOf(task)
       const completedClass = task.completed ? "completed" : ""
-      return `
-        <div class="task-item ${completedClass}">
-          <div class="task-content">
-            <div class="task-name-row">
-              <div class="task-name">${task.title}</div>
-              <span class="task-urgency ${task.urgency}">${task.urgency.charAt(0).toUpperCase() + task.urgency.slice(1)} Urgency</span>
-            </div>
+      
+      // ✨ NEW CODE ADDED HERE ✨
+      const urgencyBadgeClass = task.completed ? "finished" : task.urgency
+      const urgencyBadgeText = task.completed ? "FINISHED" : `${task.urgency.charAt(0).toUpperCase() + task.urgency.slice(1)} Urgency`
+      
+        return `
+          <div class="task-item ${completedClass}">
+            <div class="task-content">
+              <div class="task-name-row">
+                <div class="task-name">${task.title}</div>
+                <span class="task-urgency ${urgencyBadgeClass}">${urgencyBadgeText}</span>
+              </div>
             <div class="task-meta">
               <span class="task-meta-item">${task.subject || "No subject"}</span>
               <span class="task-meta-item">•</span>
@@ -1689,7 +1694,7 @@ document.querySelectorAll(".urgency-btn").forEach((btn) => {
 document.getElementById("taskNameInput")?.addEventListener("input", updateSaveChangesButton)
 document.getElementById("taskSubjectInput")?.addEventListener("input", updateSaveChangesButton)
 document.getElementById("taskDateInput")?.addEventListener("change", updateSaveChangesButton)
-document.getElementById("taskLengthInput")?.addEventListener("input", updateSaveChangesButton)
+document.getElementById("taskLengthInput")?.addEventListener("change", updateSaveChangesButton)
 
 document.getElementById("editForm")?.addEventListener("submit", (e) => {
   e.preventDefault()
