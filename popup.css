@@ -2130,7 +2130,7 @@ body {
 }
 
 /* ===========================
-   TASK LINK STYLES
+   TASK LINK STYLES for the google classroom
    =========================== */
 
 .view-in-classroom-btn {
@@ -2319,6 +2319,390 @@ body {
   margin-bottom: 24px;
   box-shadow: 0 4px 12px rgba(217, 70, 239, 0.08);
 }
+
+/* ═══════════════════════════════════════════════
+   CSS FIXES - Add/Update these in popup.css
+   ═══════════════════════════════════════════════ */
+
+/* FIX 1: Ensure Generate Button is Full Width */
+.generate-section {
+  position: relative;
+  padding: 0 24px 24px;
+}
+
+.generate-btn {
+  width: 100%;  /* ← CRITICAL: Make sure this is 100% */
+  background: linear-gradient(135deg, #d946ef 0%, #c026d3 50%, #a855f7 100%);
+  color: white;
+  border: none;
+  border-radius: 24px;
+  padding: 18px 32px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(217, 70, 239, 0.4), 0 0 15px rgba(217, 70, 239, 0.2);
+}
+
+.generate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(217, 70, 239, 0.5), 0 0 20px rgba(217, 70, 239, 0.3);
+}
+
+.generate-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* FIX 2: Ensure GWA Card is Also Full Width */
+.gwa-card {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin: 0 24px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3), 0 0 20px rgba(59, 130, 246, 0.15);
+  text-align: left;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  width: calc(100% - 48px); /* ← Account for margins */
+  display: block; /* ← Make sure it's block level */
+}
+/* ═══════════════════════════════════════════════
+   ADD THESE STYLES TO THE END OF YOUR popup.css
+   (Your existing styles should remain unchanged)
+   ═══════════════════════════════════════════════ */
+
+/* Analyze Button on Task Cards */
+.analyze-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.analyze-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.analyze-btn .sparkle {
+  font-size: 16px;
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+/* AI Analysis Modal Enhancements */
+.ai-analysis-modal {
+  background: white;
+  border-radius: 20px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: popUp 0.3s ease-out;
+}
+
+.ai-loading {
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.ai-loading .spinner {
+  width: 60px;
+  height: 60px;
+  border: 5px solid #f3f4f6;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.ai-loading-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.ai-loading-text {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.ai-results {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ai-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ai-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.ai-content {
+  flex: 1;
+  padding: 20px 24px;
+  overflow-y: auto;
+}
+
+.ai-section {
+  margin-bottom: 20px;
+}
+
+.ai-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 12px;
+}
+
+.ai-summary {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.6;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.ai-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.ai-badge {
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-urgency-high {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.badge-urgency-medium {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.badge-urgency-low {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.badge-time {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-difficulty-easy {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.badge-difficulty-medium {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.badge-difficulty-hard {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.ai-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ai-step {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border-left: 3px solid #3b82f6;
+}
+
+.step-number {
+  width: 28px;
+  height: 28px;
+  background: #3b82f6;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.step-info {
+  flex: 1;
+}
+
+.step-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.step-desc {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.step-time {
+  font-size: 12px;
+  color: #3b82f6;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.ai-tips {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-tip {
+  padding: 10px 12px 10px 32px;
+  background: #f9fafb;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.5;
+  position: relative;
+}
+
+.ai-tip::before {
+  content: '💡';
+  position: absolute;
+  left: 10px;
+  top: 10px;
+}
+
+.ai-recommendation {
+  padding: 16px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.ai-actions {
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 12px;
+}
+
+.btn-primary,
+.btn-secondary {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #d946ef 0%, #c026d3 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(217, 70, 239, 0.4);
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.btn-secondary:hover {
+  background: #e5e7eb;
+}
+
+/* Modal overlay show class */
+.modal-overlay.show {
+  display: flex;
+}
+
+/* Ensure AI modal has proper z-index */
+#aiAnalysisModal {
+  z-index: 10000;
+}
+
+/* Animation for modal */
+@keyframes popUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 
 /* ===========================
    SYNC LOADING SCREEN STYLES

@@ -41,18 +41,31 @@ const originalShowPage = (pageId) => {
 function showPage(pageId) {
   originalShowPage(pageId)
 
-  if (pageId === "optionsPage") {
-    loadOptionsPage()
-  } else if (pageId === "urgentTasksPage") {
-    loadUrgentTasksPage()
-  } else if (pageId === "missedTasksPage") {
-    loadMissedTasksPage()
-  } else if (pageId === "studyPlansPage") {
-    loadStudyPlans()
-  } else if (pageId === "planDetailPage") {
-    loadPlanDetails()
+  // Initialize page-specific functions
+    if (pageId === 'gwaPage') {
+      loadGrades()
+    } else if (pageId === 'studyPlansPage') {
+      loadStudyPlans()
+    } else if (pageId === 'urgentTasksPage') {
+      loadUrgentTasksPage()
+    } else if (pageId === 'missedTasksPage') {
+      loadMissedTasksPage()
+    } else if (pageId === 'manualPlanPage') {
+      initManualPlanPage()
+    } else if (pageId === 'loadingPage') {
+      generateStudyPlan()
+    } else if (pageId === 'planDetailPage') {
+      loadPlanDetails()
+    } else if (pageId === 'focusModeStatsPage') {  // ✅ ADD THIS
+      loadFocusModeStats()
+    } else if (pageId === 'manageSitesPage') {  // ✅ ADD THIS
+      loadBlockedSites()
+    } else if (pageId === 'optionsPage') {
+      loadOptionsPage
+    } else if (pageId === 'homePage') {
+      loadTasks()
+    }
   }
-}
 
 function showSyncLoadingScreen() {
   isSyncing = true
@@ -324,6 +337,7 @@ document.getElementById("missedTasksBtn")?.addEventListener("click", () => {
 document.getElementById("gwaBtn")?.addEventListener("click", () => {
   showPage("gwaPage")
 })
+
 
 // Generate study plan options
 const optionsCard = document.getElementById("optionsCard")
@@ -966,15 +980,15 @@ document.getElementById("deleteModal")?.addEventListener("click", (e) => {
 // ===========================
 async function loadUrgentTasksPage() {
   try {
-    const result = await chrome.storage.local.get("urgentTasks")
+    const result = await chrome.storage.local.get('urgentTasks')
     let tasks = result.urgentTasks || []
 
-    const tasksList = document.getElementById("urgentTasksListPage")
+    const tasksList = document.getElementById('urgentTasksListPage')
 
     if (tasks.length > 0) {
-      const highUrgency = tasks.filter((task) => task.urgency === "high")
-      const mediumUrgency = tasks.filter((task) => task.urgency === "medium")
-      const lowUrgency = tasks.filter((task) => task.urgency === "low")
+      const highUrgency = tasks.filter(task => task.urgency === 'high')
+      const mediumUrgency = tasks.filter(task => task.urgency === 'medium')
+      const lowUrgency = tasks.filter(task => task.urgency === 'low')
 
       tasks = [...highUrgency, ...mediumUrgency, ...lowUrgency]
     }
@@ -989,32 +1003,44 @@ async function loadUrgentTasksPage() {
     }
 
     tasksList.innerHTML = tasks
-      .map((task) => {
+      .map((task, index) => {
         const dueDate = new Date(task.dueDate)
         return `
         <div class="task-item-card">
           <h3 class="task-item-title">${task.title}</h3>
-          <p class="task-item-subject">${task.subject || "No subject"}</p>
-          <p class="task-item-due">Due: ${dueDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
-          ${task.link ? `<a href="${task.link}" class="view-in-classroom-btn" target="_blank">View in Google Classroom →</a>` : ""}
+          <p class="task-item-subject">${task.subject || 'No subject'}</p>
+          <p class="task-item-due">Due: ${dueDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+          ${task.link ? `<a href="${task.link}" class="view-in-classroom-btn" target="_blank">View in Google Classroom →</a>` : ''}
+          <button class="analyze-btn" data-task-index="${index}">
+            <span class="sparkle">✨</span> Analyze Assignment
+          </button>
         </div>
       `
       })
-      .join("")
+      .join('')
+    
+    // Add click handlers for analyze buttons
+    document.querySelectorAll('.analyze-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const index = parseInt(btn.dataset.taskIndex)
+        analyzeTask(tasks[index])
+      })
+    })
   } catch (error) {
-    console.error("[Marshal] Error loading urgent tasks:", error)
+    console.error('[Marshal] Error loading urgent tasks:', error)
   }
 }
+
 
 // ===========================
 // MISSED TASKS PAGE
 // ===========================
 async function loadMissedTasksPage() {
   try {
-    const result = await chrome.storage.local.get("missedTasks")
+    const result = await chrome.storage.local.get('missedTasks')
     const tasks = result.missedTasks || []
 
-    const tasksList = document.getElementById("missedTasksListPage")
+    const tasksList = document.getElementById('missedTasksListPage')
 
     if (tasks.length === 0) {
       tasksList.innerHTML = `
@@ -1026,20 +1052,31 @@ async function loadMissedTasksPage() {
     }
 
     tasksList.innerHTML = tasks
-      .map((task) => {
+      .map((task, index) => {
         const dueDate = new Date(task.dueDate)
         return `
         <div class="task-item-card">
           <h3 class="task-item-title">${task.title}</h3>
-          <p class="task-item-subject">${task.subject || "No subject"}</p>
-          <p class="task-item-due">Due: ${dueDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
-          ${task.link ? `<a href="${task.link}" class="view-in-classroom-btn" target="_blank">View in Google Classroom →</a>` : ""}
+          <p class="task-item-subject">${task.subject || 'No subject'}</p>
+          <p class="task-item-due">Due: ${dueDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+          ${task.link ? `<a href="${task.link}" class="view-in-classroom-btn" target="_blank">View in Google Classroom →</a>` : ''}
+          <button class="analyze-btn" data-task-index="${index}">
+            <span class="sparkle">✨</span> Analyze Assignment
+          </button>
         </div>
       `
       })
-      .join("")
+      .join('')
+    
+    // Add click handlers for analyze buttons
+    document.querySelectorAll('.analyze-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const index = parseInt(btn.dataset.taskIndex)
+        analyzeTask(tasks[index])
+      })
+    })
   } catch (error) {
-    console.error("[Marshal] Error loading missed tasks:", error)
+    console.error('[Marshal] Error loading missed tasks:', error)
   }
 }
 
@@ -2079,5 +2116,147 @@ window.addEventListener("load", () => {
   const focusStatsPage = document.getElementById("focusModeStatsPage")
   if (focusStatsPage && !focusStatsPage.classList.contains("hidden")) {
     loadFocusModeStats()
+  }
+})
+
+// AI Analysis Functions (should already exist in your popup.js)
+let currentAnalyzedTask = null
+
+async function analyzeTask(task) {
+  console.log('[Marshal] Analyzing task:', task.title)
+  currentAnalyzedTask = task
+  
+  const modal = document.getElementById('aiAnalysisModal')
+  const loadingState = document.getElementById('aiLoadingState')
+  const resultsState = document.getElementById('aiResultsState')
+  
+  modal.classList.add('show')
+  loadingState.style.display = 'block'
+  resultsState.style.display = 'none'
+  
+  try {
+    const analysis = await analyzeAssignment(task)
+    displayAnalysisResults(analysis, task)
+  } catch (error) {
+    console.error('[Marshal] Error analyzing task:', error)
+    alert('Failed to analyze assignment. Please try again.')
+    modal.classList.remove('show')
+  }
+}
+
+function displayAnalysisResults(analysis, task) {
+  const loadingState = document.getElementById('aiLoadingState')
+  const resultsState = document.getElementById('aiResultsState')
+  const content = document.getElementById('aiAnalysisContent')
+  
+  const stepsHTML = analysis.breakdown.map((step, i) => `
+    <div class="ai-step">
+      <div class="step-number">${i + 1}</div>
+      <div class="step-info">
+        <div class="step-title">${step.step}</div>
+        <div class="step-desc">${step.description}</div>
+        <div class="step-time">⏰ ${step.estimatedTime}</div>
+      </div>
+    </div>
+  `).join('')
+  
+  const tipsHTML = analysis.strategy.tips.map(tip => `
+    <li class="ai-tip">${tip}</li>
+  `).join('')
+  
+  const urgencyClass = `badge-urgency-${analysis.urgency}`
+  
+  content.innerHTML = `
+    <h3 style="font-size: 18px; font-weight: 700; color: #1f2937; margin-bottom: 8px;">${task.title}</h3>
+    <div class="ai-summary">${analysis.summary}</div>
+    
+    <div class="ai-badges">
+      <span class="ai-badge ${urgencyClass}">⚡ ${analysis.urgency.toUpperCase()}</span>
+      <span class="ai-badge badge-time">⏰ ${analysis.totalTimeEstimate}</span>
+    </div>
+    
+    <div class="ai-section">
+      <div class="ai-section-title">📝 What To Do</div>
+      <div class="ai-steps">${stepsHTML}</div>
+    </div>
+    
+    <div class="ai-section">
+      <div class="ai-section-title">💡 Strategy & Tips</div>
+      <p style="font-size: 14px; color: #374151; line-height: 1.6; margin-bottom: 12px;">${analysis.strategy.approach}</p>
+      <ul class="ai-tips">${tipsHTML}</ul>
+    </div>
+    
+    <div class="ai-section">
+      <div class="ai-section-title">⏰ Recommendation</div>
+      <div class="ai-recommendation">${analysis.recommendedStartTime}</div>
+    </div>
+  `
+  
+  loadingState.style.display = 'none'
+  resultsState.style.display = 'flex'
+}
+
+function closeAiModal() {
+  const modal = document.getElementById('aiAnalysisModal')
+  modal.classList.remove('show')
+  currentAnalyzedTask = null
+}
+
+async function addAnalyzedTaskToPlan() {
+  if (!currentAnalyzedTask) return
+  
+  console.log('[Marshal] Adding to study plan')
+  
+  try {
+    const analysis = await analyzeAssignment(currentAnalyzedTask)
+    
+    const planTasks = analysis.breakdown.map(step => ({
+      title: `${currentAnalyzedTask.title} - ${step.step}`,
+      subject: currentAnalyzedTask.subject || 'General',
+      dueDate: currentAnalyzedTask.dueDate,
+      taskLength: step.estimatedTime,
+      urgency: analysis.urgency,
+      completed: false
+    }))
+    
+    const studyPlan = {
+      id: Date.now(),
+      title: `${currentAnalyzedTask.title} - AI Plan`,
+      createdAt: new Date().toISOString(),
+      tasks: planTasks,
+      schedule: planTasks.map(t => ({
+        task: t.title,
+        date: new Date(t.dueDate).toLocaleDateString(),
+        duration: t.taskLength,
+        priority: analysis.urgency === 'high' ? 'High' : 'Medium',
+        completed: false
+      })),
+      type: 'ai',
+      completed: false
+    }
+    
+    const result = await chrome.storage.local.get('studyPlans')
+    const plans = result.studyPlans || []
+    plans.unshift(studyPlan)
+    await chrome.storage.local.set({ studyPlans: plans })
+    
+    closeAiModal()
+    alert('Study plan created! 🎉')
+    setTimeout(() => showPage('studyPlansPage'), 500)
+    
+  } catch (error) {
+    console.error('[Marshal] Error adding to plan:', error)
+    alert('Failed to create study plan.')
+  }
+}
+
+// Event listeners (should already exist)
+document.getElementById('closeAiModal')?.addEventListener('click', closeAiModal)
+document.getElementById('closeAiBtn')?.addEventListener('click', closeAiModal)
+document.getElementById('addToPlanBtn')?.addEventListener('click', addAnalyzedTaskToPlan)
+
+document.getElementById('aiAnalysisModal')?.addEventListener('click', (e) => {
+  if (e.target.id === 'aiAnalysisModal') {
+    closeAiModal()
   }
 })

@@ -1,6 +1,55 @@
 // Background service worker for Marshal - MANIFEST V3 COMPATIBLE
 console.log("[Marshal Background] Service worker initialized (Manifest V3)")
 
+const DEFAULT_MODEL = "deepseek/deepseek-chat"
+// Other good free options:
+// - "google/gemini-flash-1.5"
+// - "mistralai/mistral-7b-instruct"
+// - "gryphe/mythomax-l2-13b"
+
+// api call function (via your deployed proxy)
+async function handleAIAPICall(payload) {
+  const API_URL = "https://marshal-proxy.vercel.app/api/ai" // deployed endpoint
+
+  console.log("[Marshal] Calling proxy model:", DEFAULT_MODEL)
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: payload.model || DEFAULT_MODEL,
+        prompt: payload.prompt,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error("[Marshal] Proxy API error:", errorData)
+      throw new Error(errorData.error?.message || "Unknown API error")
+    }
+
+    const data = await response.json()
+    const text = data.choices?.[0]?.message?.content || "No response"
+    return text
+  } catch (error) {
+    console.error("[Marshal] Error calling proxy API:", error)
+    throw error
+  }
+}
+
+
+//message handler
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "callGeminiAPI" || message.action === "callAIAPI") {
+    handleAIAPICall(message.payload)
+      .then((response) => sendResponse({ success: true, data: response }))
+      .catch((error) => sendResponse({ success: false, error: error.message }))
+    return true // keep async channel open
+  }
+})
+
+
 // Default blocked websites for study mode
 const DEFAULT_BLOCKED_SITES = [
   "facebook.com",
@@ -118,6 +167,37 @@ async function toggleDefaultSite(site) {
   }
 }
 
+// Helper function to check if URL should be blocked
+function shouldBlockUrl(url) {
+  if (!studyModeActive) return false
+  
+  try {
+    const urlObj = new URL(url)
+    const hostname = urlObj.hostname.toLowerCase()
+    
+    // Get enabled default sites
+    const enabledDefaultSites = DEFAULT_BLOCKED_SITES.filter(
+      site => !disabledDefaultSites.includes(site)
+    )
+    
+    const allBlockedSites = [...enabledDefaultSites, ...customBlockedSites]
+    
+    // Check if hostname matches any blocked site (including subdomains)
+    return allBlockedSites.some(blockedSite => {
+      // Remove www. for comparison
+      const cleanHostname = hostname.replace(/^www\./, '')
+      const cleanBlockedSite = blockedSite.replace(/^www\./, '')
+      
+      // Check exact match or subdomain match
+      return cleanHostname === cleanBlockedSite || 
+             cleanHostname.endsWith('.' + cleanBlockedSite)
+    })
+  } catch (e) {
+    console.error("[Marshal Background] Error checking URL:", e)
+    return false
+  }
+}
+
 // âš¡ MANIFEST V3: Use declarativeNetRequest for blocking
 async function updateBlockingRules() {
   console.log("[Marshal Background] 🔄 Updating blocking rules...")
@@ -202,6 +282,21 @@ async function updateBlockingRules() {
         }
       })
     }
+
+    //Rule for all subdomains
+    // Rule for all subdomains
+        rules.push({
+          id: index * 2 + 3 + 1000,
+          priority: 1,
+          action: {
+            type: "redirect",
+            redirect: { url: chrome.runtime.getURL("blocked.html") }
+          },
+          condition: {
+            urlFilter: `*://*.${site}/*`,
+            resourceTypes: ["main_frame"]
+          }
+        })
 
     // Add all rules at once
     await chrome.declarativeNetRequest.updateDynamicRules({
@@ -297,8 +392,8 @@ async function trackBlockAttempt(hostname) {
   const weeklyStats = result.weeklyStats || {}
   weeklyStats[date] = (weeklyStats[date] || 0) + 1
 
-  // Calculate time saved (5 minutes per block)
-  const timeSaved = (result.totalTimeSaved || 0) + 5
+  // Calculate time saved (0.1 seconds per block)
+  const timeSaved = (result.totalTimeSaved || 0) + 0.1
 
   await chrome.storage.local.set({
     dailyBlockedAttempts: dailyAttempts,
@@ -316,19 +411,181 @@ async function trackBlockAttempt(hostname) {
   })
 }
 
-// Google Classroom sync (keeping your existing code)
+// Listen for navigation to blocked sites (for stats tracking)
+chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((details) => {
+  console.log("[Marshal Background] 🚫 Rule matched:", details)
+  // Track the block attempt
+  try {
+    const url = new URL(details.request.url)
+    trackBlockAttempt(url.hostname)
+  } catch (e) {
+    console.error("[Marshal Background] Error tracking block:", e)
+  }
+})
+
+
+// Sync Google Classroom data periodically
 async function syncGoogleClassroomData() {
-  console.log("[Marshal Background] ⚡ Starting sync...")
-  // ... rest of your sync code ...
+  console.log("[Marshal Background] Starting Google Classroom sync...")
+
+  try {
+    const token = await getAuthToken()
+    const coursesData = await fetchCourses(token)
+
+    if (!coursesData.courses || coursesData.courses.length === 0) {
+      console.log("[Marshal Background] No courses found")
+      return
+    }
+
+    const allAssignments = []
+
+    for (const course of coursesData.courses) {
+      const courseWorkData = await fetchCourseWork(token, course.id)
+
+      if (courseWorkData.courseWork) {
+        for (const work of courseWorkData.courseWork) {
+          const submission = await fetchSubmissionStatus(token, course.id, work.id)
+
+          const submissionState = submission?.state || "NEW"
+          const isTurnedIn =
+            submissionState === "TURNED_IN" ||
+            submissionState === "RETURNED" ||
+            submissionState === "RECLAIMED_BY_STUDENT"
+
+          const assignment = {
+            courseId: course.id,
+            courseName: course.name,
+            title: work.title,
+            dueDate: work.dueDate,
+            dueTime: work.dueTime,
+            turnedIn: isTurnedIn,
+            link: work.alternateLink
+          }
+
+          allAssignments.push(assignment)
+        }
+      }
+    }
+
+    await categorizeAndSaveAssignments(allAssignments)
+    console.log("[Marshal Background] Sync completed successfully")
+  } catch (error) {
+    console.error("[Marshal Background] Sync error:", error)
+  }
 }
 
-// Initialize on install
-chrome.runtime.onInstalled.addListener(() => {
-  console.log("[Marshal Background] Extension installed/updated")
-  chrome.storage.local.get(["studyModeActive"], (result) => {
-    studyModeActive = result.studyModeActive || false
-    if (studyModeActive) {
-      updateBlockingRules()
-    }
+// Helper functions
+function getAuthToken() {
+  return new Promise((resolve, reject) => {
+    chrome.identity.getAuthToken({ interactive: false }, (token) => {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError)
+      } else {
+        resolve(token)
+      }
+    })
   })
-})
+}
+
+async function fetchCourses(token) {
+  const response = await fetch("https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE", {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch courses: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
+async function fetchCourseWork(token, courseId) {
+  const response = await fetch(`https://classroom.googleapis.com/v1/courses/${courseId}/courseWork`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      return { courseWork: [] }
+    }
+    throw new Error(`Failed to fetch coursework: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
+async function fetchSubmissionStatus(token, courseId, courseWorkId) {
+  try {
+    const response = await fetch(
+      `https://classroom.googleapis.com/v1/courses/${courseId}/courseWork/${courseWorkId}/studentSubmissions`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    )
+
+    if (!response.ok) return null
+
+    const data = await response.json()
+    const submissions = data.studentSubmissions || []
+
+    let submission = submissions.find(
+      (s) => s.state === "TURNED_IN" || s.state === "RETURNED" || s.state === "RECLAIMED_BY_STUDENT",
+    )
+
+    if (!submission && submissions.length > 0) {
+      submission = submissions[0]
+    }
+
+    return submission
+  } catch (e) {
+    return null
+  }
+}
+
+async function categorizeAndSaveAssignments(assignments) {
+  const now = new Date()
+  const urgentTasks = []
+  const missedTasks = []
+
+  for (const assignment of assignments) {
+    if (assignment.turnedIn) continue
+
+    if (!assignment.dueDate) continue
+
+    const dueDate = new Date(
+      assignment.dueDate.year,
+      assignment.dueDate.month - 1,
+      assignment.dueDate.day,
+      assignment.dueTime?.hours || 23,
+      assignment.dueTime?.minutes || 59,
+    )
+
+    const diffTime = dueDate - now
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+    const task = {
+      title: assignment.title,
+      subject: assignment.courseName,
+      dueDate: dueDate.toISOString(),
+      urgency: diffDays <= 1 ? "high" : diffDays <= 3 ? "medium" : "low",
+      link: assignment.link
+    }
+
+    if (diffTime < 0) {
+      missedTasks.push(task)
+    } else if (diffDays <= 7) {
+      urgentTasks.push(task)
+    }
+  }
+
+  await chrome.storage.local.set({
+    urgentTasks: urgentTasks,
+    missedTasks: missedTasks,
+  })
+}
+
+// Sync every 15 minutes
+setInterval(syncGoogleClassroomData, 15 * 60 * 1000)
+
+// Initial sync after 5 seconds
+setTimeout(syncGoogleClassroomData, 5000)
