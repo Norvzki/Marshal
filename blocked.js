@@ -63,7 +63,7 @@ document.getElementById('viewAnalyticsBtn').addEventListener('click', () => {
 
 document.getElementById('openMarshalBtn').addEventListener('click', () => {
   console.log("[Blocked Page] Open Marshal clicked")
-  chrome.runtime.sendMessage({ action: 'openPopup' })
+  chrome.runtime.sendMessage({ action: 'openStatsPage' })
 })
 
 // Initialize on page load
