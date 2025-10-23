@@ -1,6 +1,43 @@
 // Background service worker for Marshal - MANIFEST V3 COMPATIBLE
 console.log("[Marshal Background] Service worker initialized (Manifest V3)")
 
+const DEFAULT_MODEL = "deepseek/deepseek-chat"
+// Other good free options:
+// - "google/gemini-flash-1.5"
+// - "mistralai/mistral-7b-instruct"
+// - "gryphe/mythomax-l2-13b"
+
+// API call function (via your deployed proxy)
+async function handleAIAPICall(payload) {
+  const API_URL = "https://marshal-proxy.vercel.app/api/ai" // deployed endpoint
+
+  console.log("[Marshal] Calling proxy model:", DEFAULT_MODEL)
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: payload.model || DEFAULT_MODEL,
+        prompt: payload.prompt,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error("[Marshal] Proxy API error:", errorData)
+      throw new Error(errorData.error?.message || "Unknown API error")
+    }
+
+    const data = await response.json()
+    const text = data.choices?.[0]?.message?.content || "No response"
+    return text
+  } catch (error) {
+    console.error("[Marshal] Error calling proxy API:", error)
+    throw error
+  }
+}
+
 // Default blocked websites for study mode
 const DEFAULT_BLOCKED_SITES = [
   "facebook.com",
@@ -100,6 +137,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.action.openPopup()
     sendResponse({ success: true })
     return true
+  }
+  
+  if (message.action === "callGeminiAPI" || message.action === "callAIAPI") {
+    handleAIAPICall(message.payload)
+      .then((response) => sendResponse({ success: true, data: response }))
+      .catch((error) => sendResponse({ success: false, error: error.message }))
+    return true // keep async channel open
   }
 })
 

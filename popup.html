@@ -737,6 +737,34 @@
     </div>
   </div>
 
+  <!-- AI Analysis Modal -->
+  <div class="modal-overlay" id="aiAnalysisModal">
+    <div class="ai-analysis-modal">
+      <!-- Loading State -->
+      <div class="ai-loading" id="aiLoadingState">
+        <div class="spinner"></div>
+        <div class="ai-loading-title">Analyzing Assignment</div>
+        <div class="ai-loading-text">Using AI to break down your task...</div>
+      </div>
+
+      <!-- Results State -->
+      <div class="ai-results" id="aiResultsState" style="display: none;">
+        <div class="ai-header">
+          <div class="ai-title">AI Analysis</div>
+          <button class="modal-close" id="closeAiModal">✕</button>
+        </div>
+        <div class="ai-content" id="aiAnalysisContent">
+          <!-- Content will be populated by JS -->
+        </div>
+        <div class="ai-actions">
+          <button class="btn-secondary" id="closeAiBtn">Close</button>
+          <button class="btn-primary" id="addToPlanBtn">Add to Study Plan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="ai-helpers.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
