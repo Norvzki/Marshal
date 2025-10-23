@@ -67,10 +67,16 @@ let customBlockedSites = []
 let disabledDefaultSites = []
 
 // Load study mode state and custom sites on startup
-chrome.storage.local.get(["studyModeActive", "customBlockedSites", "disabledDefaultSites"], (result) => {
+chrome.storage.local.get(["studyModeActive", "customBlockedSites", "disabledDefaultSites", "disabledDefault"], (result) => {
   studyModeActive = result.studyModeActive || false
   customBlockedSites = result.customBlockedSites || []
-  disabledDefaultSites = result.disabledDefaultSites || []
+  // Merge legacy/UI key 'disabledDefault' with canonical 'disabledDefaultSites'
+  const fromCanonical = result.disabledDefaultSites || []
+  const fromUiKey = result.disabledDefault || []
+  disabledDefaultSites = Array.from(new Set([...(fromCanonical || []), ...(fromUiKey || [])]))
+  // Persist merged state back to both keys for consistency
+  chrome.storage.local.set({ disabledDefaultSites, disabledDefault: disabledDefaultSites })
+
   console.log("[Marshal Background] Study mode:", studyModeActive ? "ON" : "OFF")
   console.log("[Marshal Background] Custom blocked sites:", customBlockedSites)
   console.log("[Marshal Background] Disabled default sites:", disabledDefaultSites)

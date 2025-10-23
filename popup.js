@@ -29,6 +29,35 @@ const SYNC_INTERVALS = {
   60: 60 * 60 * 1000,
 }
 
+async function updateSyncStatus() {
+  try {
+    const { lastSyncAt } = await chrome.storage.local.get("lastSyncAt")
+    const btn = document.getElementById("syncStatusBtn")
+    if (btn) {
+      const label = formatTimeAgo(lastSyncAt)
+      btn.textContent = label
+      // Make it look like the Sync Now button
+      btn.classList.add("sync-now-btn")
+      // Non-interactive
+      btn.disabled = true
+      btn.style.pointerEvents = "none"
+      btn.title = ""
+      // When never synced, show red; otherwise show green (Just now or time ago)
+      if (!lastSyncAt) {
+        btn.style.background = "#ef4444"
+        btn.style.borderColor = "#ef4444"
+        btn.style.color = "#ffffff"
+      } else {
+        btn.style.background = "#10b981"
+        btn.style.borderColor = "#10b981"
+        btn.style.color = "#ffffff"
+      }
+    }
+  } catch (e) {
+    console.error("[Marshal] Failed to update sync status:", e)
+  }
+}
+
 // Declare originalShowPage here to fix linting error
 const originalShowPage = (pageId) => {
   document.querySelectorAll(".page").forEach((page) => {
@@ -212,6 +241,9 @@ async function performSync() {
     await loadGoogleClassroomData()
 
     console.log("[Marshal] Sync completed successfully")
+    await chrome.storage.local.set({ lastSyncAt: Date.now() })
+    // Update sync status label if settings page is open
+    updateSyncStatus()
     await new Promise((resolve) => setTimeout(resolve, 1000)) // Show success message
   } catch (error) {
     console.error("[Marshal] Sync error in performSync:", error)
@@ -353,9 +385,8 @@ generateBtn?.addEventListener("click", () => {
 })
 
 document.getElementById("aiGenerateBtn")?.addEventListener("click", () => {
-  showPage("loadingPage")
-  // Call the generateStudyPlan function after showing the loading page
-  setTimeout(() => generateStudyPlan(), 500)
+  // Go straight to naming page; loading will occur after user submits the name
+  showPage("aiPlanNamingPage")
 })
 
 document.getElementById("manualGenerateBtn")?.addEventListener("click", () => {
@@ -417,6 +448,29 @@ document.getElementById("syncNowBtn")?.addEventListener("click", async () => {
   }
   hideSyncLoadingScreen()
 })
+// Home page Sync button
+document.getElementById("homeSyncBtn")?.addEventListener("click", async () => {
+  if (isSyncing) {
+    console.log("[Marshal] Sync already in progress, ignoring click")
+    return
+  }
+
+  console.log("[Marshal] Home manual sync triggered")
+  showSyncLoadingScreen()
+
+  await new Promise((resolve) => setTimeout(resolve, 500))
+
+  try {
+    await performSync()
+    await loadTasks()
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+  } catch (error) {
+    console.error("[v0] SYNC FAILED - Error:", error)
+    alert("Sync failed: " + error.message)
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+  }
+  hideSyncLoadingScreen()
+})
 
 document.getElementById("syncFrequencySelect")?.addEventListener("change", async (e) => {
   const frequency = e.target.value
@@ -461,12 +515,24 @@ document.getElementById("darkModeToggle")?.addEventListener("change", async (e) 
 })
 
 document.getElementById("exitAccountBtn")?.addEventListener("click", async () => {
-  console.log("[Marshal] Signing out...")
-  chrome.identity.clearAllCachedAuthTokens(() => {
-    console.log("[Marshal] Auth tokens cleared")
-    // Reload to refresh
+  try {
+    console.log("[Marshal] Signing out...")
+    // Try to get current token silently to revoke
+    chrome.identity.getAuthToken({ interactive: false }, async (token) => {
+      try {
+        if (token) {
+          await fetch(`https://accounts.google.com/o/oauth2/revoke?token=${token}`)
+        }
+      } catch (_) {}
+      chrome.identity.clearAllCachedAuthTokens(() => {
+        console.log("[Marshal] Auth tokens cleared")
+        location.reload()
+      })
+    })
+  } catch (e) {
+    console.error("[Marshal] Error during sign out:", e)
     location.reload()
-  })
+  }
 })
 
 async function loadOptionsPage() {
@@ -491,12 +557,9 @@ async function loadOptionsPage() {
     darkModeToggle.checked = result.darkMode !== false
   }
 
+  // Always show manual Sync Now button regardless of auto-sync setting
   if (syncNowContainer) {
-    if (result.autoSync === false) {
-      syncNowContainer.classList.remove("hidden")
-    } else {
-      syncNowContainer.classList.add("hidden")
-    }
+    syncNowContainer.classList.remove("hidden")
   }
 
   if (customSyncContainer && syncFrequencySelect?.value === "custom") {
@@ -507,6 +570,7 @@ async function loadOptionsPage() {
   }
 
   await loadUserProfile()
+  await updateSyncStatus()
 }
 
 async function loadUserProfile() {
@@ -922,50 +986,6 @@ async function deletePlan() {
   }
 }
 
-document.getElementById("addPlanBtn")?.addEventListener("click", () => {
-  showPage("homePage")
-})
-
-document.getElementById("expandIncomplete")?.addEventListener("click", function () {
-  const section = document.getElementById("incompleteSection")
-  const isExpanded = section.classList.contains("expanded")
-
-  if (isExpanded) {
-    section.classList.remove("expanded")
-    this.classList.remove("expanded")
-    expandedSection = null
-  } else {
-    if (expandedSection) {
-      expandedSection.classList.remove("expanded")
-      document.getElementById("expandIncomplete")?.classList.remove("expanded")
-      document.getElementById("expandComplete")?.classList.remove("expanded")
-    }
-    section.classList.add("expanded")
-    this.classList.add("expanded")
-    expandedSection = section
-  }
-})
-
-document.getElementById("expandComplete")?.addEventListener("click", function () {
-  const section = document.getElementById("completeSection")
-  const isExpanded = section.classList.contains("expanded")
-
-  if (isExpanded) {
-    section.classList.remove("expanded")
-    this.classList.remove("expanded")
-    expandedSection = null
-  } else {
-    if (expandedSection) {
-      expandedSection.classList.remove("expanded")
-      document.getElementById("expandIncomplete")?.classList.remove("expanded")
-      document.getElementById("expandComplete")?.classList.remove("expanded")
-    }
-    section.classList.add("expanded")
-    this.classList.add("expanded")
-    expandedSection = section
-  }
-})
-
 document.getElementById("confirmDeleteBtn")?.addEventListener("click", deletePlan)
 document.getElementById("cancelDeleteBtn")?.addEventListener("click", hideDeleteModal)
 
@@ -1270,8 +1290,43 @@ document.getElementById("generateAiPlanBtn")?.addEventListener("click", async ()
   }
 
   try {
-    const result = await chrome.storage.local.get("tempAiTasks")
-    const allTasks = result.tempAiTasks || []
+    // Show loading while generating tasks
+    showPage("loadingPage")
+
+    // Collect tasks from storage (urgent + missed). If none, use samples
+    const storage = await chrome.storage.local.get(["urgentTasks", "missedTasks"]) 
+    const urgentTasks = storage.urgentTasks || []
+    const missedTasks = storage.missedTasks || []
+    const allTasks = [...urgentTasks, ...missedTasks]
+
+    if (allTasks.length === 0) {
+      allTasks.push(
+        {
+          title: "Math Assignment - Chapter 5",
+          subject: "Mathematics",
+          dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+          urgency: "high",
+          taskLength: "2 hours",
+        },
+        {
+          title: "English Essay Draft",
+          subject: "English",
+          dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
+          urgency: "high",
+          taskLength: "1 hour",
+        },
+        {
+          title: "Science Lab Report",
+          subject: "Science",
+          dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+          urgency: "medium",
+          taskLength: "3 hours",
+        },
+      )
+    }
+
+    // Simulate AI processing
+    await new Promise((resolve) => setTimeout(resolve, 2000))
 
     const studyPlan = {
       id: Date.now(),
@@ -1287,13 +1342,15 @@ document.getElementById("generateAiPlanBtn")?.addEventListener("click", async ()
     const plans = existingPlans.studyPlans || []
     plans.unshift(studyPlan)
     await chrome.storage.local.set({ studyPlans: plans })
-    await chrome.storage.local.remove("tempAiTasks")
 
+    // Reset input and navigate to plans
     document.getElementById("aiPlanName").value = ""
     showPage("studyPlansPage")
   } catch (error) {
     console.error("[Marshal] Error creating AI plan:", error)
     alert("Failed to create study plan. Error: " + error.message)
+    // In case of error, send back to home to avoid stuck state
+    showPage("homePage")
   }
 })
 
@@ -1317,6 +1374,10 @@ async function loadPlanDetails() {
     }
 
     currentTasks = plan.tasks || []
+
+    // ensure sort label matches default sort
+    const sortLabelEl = document.getElementById("sortLabel")
+    if (sortLabelEl) sortLabelEl.textContent = "Date of Deadline"
 
     document.getElementById("planTitle").textContent = plan.title
     const date = new Date(plan.createdAt)
@@ -1554,6 +1615,13 @@ function openEditModal(index) {
   editingTaskIndex = index
   const task = currentTasks[index]
 
+  // Preserve original only for edit mode
+  if (!isAddingTask) {
+    originalTaskData = JSON.parse(JSON.stringify(task))
+  } else {
+    originalTaskData = null
+  }
+
   originalTaskData = JSON.parse(JSON.stringify(task))
 
   document.getElementById("taskNameInput").value = task.title
@@ -1568,7 +1636,20 @@ function openEditModal(index) {
     }
   })
 
-  updateSaveChangesButton()
+  // Adjust modal UI based on add vs edit
+  const modalTitleEl = document.querySelector(".modal-title")
+  const saveBtn = document.getElementById("saveChangesBtn")
+  if (isAddingTask) {
+    if (modalTitleEl) modalTitleEl.textContent = "Add new task"
+    if (saveBtn) {
+      saveBtn.textContent = "Add Task"
+      saveBtn.classList.remove("hidden")
+    }
+  } else {
+    if (modalTitleEl) modalTitleEl.textContent = "Edit your task"
+    if (saveBtn) saveBtn.textContent = "Save Changes"
+    updateSaveChangesButton()
+  }
 
   document.getElementById("editModalOverlay").classList.add("active")
 }
@@ -1577,6 +1658,12 @@ function closeEditModal() {
   document.getElementById("editModalOverlay").classList.remove("active")
   editingTaskIndex = null
   originalTaskData = null
+  // Restore defaults
+  const modalTitleEl = document.querySelector(".modal-title")
+  const saveBtn = document.getElementById("saveChangesBtn")
+  if (modalTitleEl) modalTitleEl.textContent = "Edit your task"
+  if (saveBtn) saveBtn.textContent = "Save Changes"
+  isAddingTask = false
 }
 
 function hasTaskChanged() {
@@ -1948,50 +2035,42 @@ async function loadBlockedSites() {
   const response = await chrome.runtime.sendMessage({ action: "getBlockedSites" })
   const defaultSites = response.default || []
   const customSites = response.custom || []
+  // Read disabled defaults from local storage so removal persists in UI
+  const storage = await chrome.storage.local.get(["disabledDefault"]) 
+  const disabledDefault = storage.disabledDefault || []
 
+  // Build combined list: enabled defaults + custom
+  const defaultSitesToShow = defaultSites.filter((s) => !disabledDefault.includes(s))
+  const combinedSites = [
+    ...defaultSitesToShow.map((s) => ({ site: s, kind: "default" })),
+    ...customSites.map((s) => ({ site: s, kind: "custom" })),
+  ]
+
+  // Render into the custom list container as a unified list
   const defaultContainer = document.getElementById("defaultSitesList")
-  defaultContainer.innerHTML = defaultSites
-    .map(
-      (site) => `
-    <div class="site-item default">
-      <span class="site-icon">🔒</span>
-      <span class="site-name">${site}</span>
-      <span class="site-badge">Default</span>
-    </div>
-  `,
-    )
-    .join("")
+  if (defaultContainer) defaultContainer.innerHTML = ""
 
   const customContainer = document.getElementById("customSitesList")
-  if (customSites.length === 0) {
-    customContainer.innerHTML = '<div class="empty-state"><p>No custom sites added yet</p></div>'
+  if (combinedSites.length === 0) {
+    customContainer.innerHTML = '<div class="empty-state"><p>No blocked sites yet</p></div>'
   } else {
-    customContainer.innerHTML = customSites
-      .map(
-        (site) => `
-      <div class="site-item custom">
-        <span class="site-icon">🚫</span>
-        <span class="site-name">${site}</span>
-        <button class="remove-site-btn" data-site="${site}">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-    `,
-      )
-      .join("")
-
-    document.querySelectorAll(".remove-site-btn").forEach((btn) => {
-      btn.addEventListener("click", async (e) => {
-        const site = e.currentTarget.dataset.site
-        await chrome.runtime.sendMessage({ action: "removeCustomSite", site })
-        loadBlockedSites()
+    customContainer.innerHTML = combinedSites
+      .map(({ site, kind }) => {
+        const icon = kind === "default" ? "🔒" : "🚫"
+        return `
+          <div class="site-item ${kind}">
+            <span class="site-icon">${icon}</span>
+            <span class="site-name">${site}</span>
+            <button class="remove-site-btn" data-kind="${kind}" data-site="${site}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        `
       })
-    })
-  }
-}
+      .join("")
 
 document.getElementById("addSiteBtn")?.addEventListener("click", async () => {
   const input = document.getElementById("newSiteInput")
@@ -2016,6 +2095,7 @@ document.getElementById("addSiteBtn")?.addEventListener("click", async () => {
   loadBlockedSites()
   showNotification(`${site} added to blocked list`, "success")
 })
+  }
 
 document.getElementById("newSiteInput")?.addEventListener("keypress", (e) => {
   if (e.key === "Enter") {
@@ -2260,3 +2340,4 @@ document.getElementById('aiAnalysisModal')?.addEventListener('click', (e) => {
     closeAiModal()
   }
 })
+}
