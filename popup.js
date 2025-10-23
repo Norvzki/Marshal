@@ -1,8 +1,9 @@
 /* eslint-disable no-undef */
 /* global chrome */
-/** @type {typeof chrome} */
-// @ts-ignore - chrome is a global API provided by the browser extension runtime
-const chrome_api = chrome
+
+/**
+ * @type {typeof chrome}
+ */
 
 // popup.js
 // ===========================
@@ -11,7 +12,7 @@ const chrome_api = chrome
 let currentPage = "homePage"
 let currentPlanId = null
 let currentTasks = []
-let currentSortBy = "urgency"
+let currentSortBy = "date"
 let editingTaskIndex = null
 let deletingTaskIndex = null
 let deletingPlanId = null
@@ -19,9 +20,11 @@ let planToDelete = null
 let expandedSection = null
 let taskCount = 0
 let isSyncing = false
-let syncIntervalId = null
+const syncIntervalId = null
 const lastSyncTime = 0
 let filterMode = "all"
+let autoSyncCountdownInterval = null
+let nextSyncTime = null
 
 const SYNC_INTERVALS = {
   15: 15 * 60 * 1000,
@@ -150,43 +153,64 @@ async function initialize() {
 
 async function initializeSyncSystem() {
   const result = await chrome.storage.local.get(["autoSync", "syncFrequency"])
-  const autoSync = result.autoSync !== false
+  const autoSync = result.autoSync === true
   const syncFrequency = result.syncFrequency || "30"
 
   if (autoSync) {
     startAutoSync(syncFrequency)
+    startCountdownTimer()
   }
 }
 
 function startAutoSync(frequency) {
-  // Clear existing interval
-  if (syncIntervalId) {
-    clearInterval(syncIntervalId)
-  }
-
   let intervalMs = SYNC_INTERVALS[frequency]
 
   // Handle custom frequency
   if (!intervalMs && frequency !== "custom") {
     intervalMs = SYNC_INTERVALS[30] // Default to 30 mins
   } else if (frequency === "custom") {
-    const result = chrome.storage.local.get("customSyncInterval")
-    intervalMs = (result.customSyncInterval || 30) * 60 * 1000
+    chrome.storage.local.get("customSyncInterval", (result) => {
+      const customMinutes = result.customSyncInterval || 30
+      const customMs = customMinutes * 60 * 1000
+      console.log(`[Marshal] Auto-sync started with custom interval: ${customMinutes} mins (${customMs}ms)`)
+
+      chrome.runtime.sendMessage(
+        {
+          action: "stopAutoSync",
+        },
+        () => {
+          chrome.runtime.sendMessage({
+            action: "setupAutoSync",
+            intervalMs: customMs,
+            frequency: "custom",
+          })
+        },
+      )
+    })
+    return
   }
 
   console.log(`[Marshal] Auto-sync started with interval: ${intervalMs}ms`)
 
-  syncIntervalId = setInterval(() => {
-    performSync()
-  }, intervalMs)
+  chrome.runtime.sendMessage(
+    {
+      action: "stopAutoSync",
+    },
+    () => {
+      chrome.runtime.sendMessage({
+        action: "setupAutoSync",
+        intervalMs: intervalMs,
+        frequency: frequency,
+      })
+    },
+  )
 }
 
 function stopAutoSync() {
-  if (syncIntervalId) {
-    clearInterval(syncIntervalId)
-    syncIntervalId = null
-    console.log("[Marshal] Auto-sync stopped")
-  }
+  console.log("[Marshal] Auto-sync stopped")
+  chrome.runtime.sendMessage({
+    action: "stopAutoSync",
+  })
 }
 
 async function performSync() {
@@ -361,6 +385,7 @@ document.getElementById("autoSyncToggle")?.addEventListener("change", async (e) 
   await chrome.storage.local.set({ autoSync: isEnabled })
 
   const syncNowContainer = document.getElementById("syncNowContainer")
+  const autoSyncTimerContainer = document.getElementById("autoSyncTimerContainer")
 
   if (isEnabled) {
     // Start auto-sync
@@ -368,10 +393,14 @@ document.getElementById("autoSyncToggle")?.addEventListener("change", async (e) 
     const frequency = result.syncFrequency || "30"
     startAutoSync(frequency)
     syncNowContainer?.classList.add("hidden")
+    autoSyncTimerContainer?.classList.remove("hidden")
+    startCountdownTimer()
   } else {
     // Stop auto-sync and show Sync Now button
     stopAutoSync()
     syncNowContainer?.classList.remove("hidden")
+    autoSyncTimerContainer?.classList.add("hidden")
+    stopCountdownTimer()
   }
 
   console.log("[Marshal] Auto-Sync toggled:", isEnabled)
@@ -419,25 +448,35 @@ document.getElementById("syncFrequencySelect")?.addEventListener("change", async
     const result = await chrome.storage.local.get("autoSync")
     if (result.autoSync !== false) {
       startAutoSync(frequency)
+      restartCountdownTimer()
     }
   }
 
   console.log("[Marshal] Sync frequency changed to:", frequency)
 })
 
-document.getElementById("customSyncInput")?.addEventListener("change", async (e) => {
-  const minutes = Number.parseInt(e.target.value)
+document.getElementById("customSyncSaveBtn")?.addEventListener("click", async () => {
+  const customSyncInput = document.getElementById("customSyncInput")
+  const minutes = Number.parseInt(customSyncInput?.value)
 
   if (minutes && minutes > 0 && minutes <= 1440) {
-    await chrome.storage.local.set({ customSyncInterval: minutes })
+    await chrome.storage.local.set({
+      customSyncInterval: minutes,
+      syncFrequency: "custom",
+    })
 
     // Restart auto-sync with custom interval if enabled
     const result = await chrome.storage.local.get("autoSync")
     if (result.autoSync !== false) {
       startAutoSync("custom")
+      restartCountdownTimer()
     }
 
-    console.log("[Marshal] Custom sync interval set to:", minutes, "minutes")
+    document.getElementById("customSyncSaveBtn")?.classList.add("hidden")
+    console.log("[Marshal] Custom sync interval saved:", minutes, "minutes")
+    alert(`Custom sync interval set to ${minutes} minutes`)
+  } else {
+    alert("Please enter a valid number between 1 and 1440 minutes")
   }
 })
 
@@ -609,24 +648,10 @@ async function fetchSubmissionStatus(token, courseId, courseWorkId) {
 
 async function loadGoogleClassroomData() {
   try {
-    console.log("[v0] loadGoogleClassroomData started")
-    console.log("[Marshal] Fetching Google Classroom data...")
+    console.log("[Marshal] ⚡ Starting FAST sync...")
+    const startTime = Date.now()
 
-    let token
-    try {
-      token = await getAuthToken()
-      console.log("[v0] Got auth token:", token ? "YES (length: " + token.length + ")" : "NO")
-    } catch (authError) {
-      console.error("[v0] AUTH ERROR:", authError)
-      console.error("[v0] Auth error message:", authError.message)
-      throw new Error("Failed to get authentication token: " + authError.message)
-    }
-
-    if (!token) {
-      throw new Error("No authentication token received")
-    }
-
-    console.log("[v0] Attempting to fetch courses...")
+    const token = await getAuthToken()
     const coursesData = await fetchCourses(token)
     console.log("[v0] Fetched courses:", coursesData.courses ? coursesData.courses.length : 0)
 
@@ -635,52 +660,69 @@ async function loadGoogleClassroomData() {
       return
     }
 
-    allAssignments = []
+    console.log(`[Marshal] Found ${coursesData.courses.length} courses`)
 
-    for (const course of coursesData.courses) {
-      console.log("[v0] Processing course:", course.name)
-      const courseWorkData = await fetchCourseWork(token, course.id)
+    // OPTIMIZATION: Fetch all coursework in parallel
+    const courseWorkPromises = coursesData.courses.map((course) =>
+      fetchCourseWork(token, course.id).then((courseWorkData) => ({
+        course,
+        courseWorkData,
+      })),
+    )
 
+    const courseWorkResults = await Promise.all(courseWorkPromises)
+
+    // OPTIMIZATION: Fetch all submissions in parallel
+    const submissionPromises = []
+
+    for (const { course, courseWorkData } of courseWorkResults) {
       if (courseWorkData.courseWork) {
         for (const work of courseWorkData.courseWork) {
-          const submission = await fetchSubmissionStatus(token, course.id, work.id)
-
-          const submissionState = submission?.state || "NEW"
-          const isTurnedIn =
-            submissionState === "TURNED_IN" ||
-            submissionState === "RETURNED" ||
-            submissionState === "RECLAIMED_BY_STUDENT"
-
-          const assignment = {
-            courseId: course.id,
-            courseName: course.name,
-            courseWorkId: work.id,
-            title: work.title,
-            description: work.description || "No description",
-            dueDate: work.dueDate,
-            dueTime: work.dueTime,
-            link: work.alternateLink,
-            maxPoints: work.maxPoints,
-            state: work.state,
-            submissionState: submissionState,
-            turnedIn: isTurnedIn,
-            submissionTime: submission?.updateTime || submission?.creationTime,
-            creationTime: work.creationTime,
-          }
-
-          allAssignments.push(assignment)
+          submissionPromises.push(
+            fetchSubmissionStatus(token, course.id, work.id).then((submission) => ({
+              course,
+              work,
+              submission,
+            })),
+          )
         }
       }
     }
 
+    console.log(`[Marshal] Fetching ${submissionPromises.length} submissions in parallel...`)
+    const submissionResults = await Promise.all(submissionPromises)
+
+    // Build assignments array
+    allAssignments = submissionResults.map(({ course, work, submission }) => {
+      const submissionState = submission?.state || "NEW"
+      const isTurnedIn =
+        submissionState === "TURNED_IN" || submissionState === "RETURNED" || submissionState === "RECLAIMED_BY_STUDENT"
+
+      return {
+        courseId: course.id,
+        courseName: course.name,
+        courseWorkId: work.id,
+        title: work.title,
+        description: work.description || "No description",
+        dueDate: work.dueDate,
+        dueTime: work.dueTime,
+        link: work.alternateLink,
+        maxPoints: work.maxPoints,
+        state: work.state,
+        submissionState: submissionState,
+        turnedIn: isTurnedIn,
+        submissionTime: submission?.updateTime || submission?.creationTime,
+        creationTime: work.creationTime,
+      }
+    })
+
     console.log("[v0] Total assignments fetched:", allAssignments.length)
     await categorizeAssignments()
-    console.log("[Marshal] Google Classroom data loaded successfully")
+
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2)
+    console.log(`[Marshal] ✅ Sync completed in ${elapsed}s (${allAssignments.length} assignments)`)
   } catch (error) {
-    console.error("[v0] loadGoogleClassroomData error:", error)
-    console.error("[v0] Error message:", error.message)
-    console.error("[Marshal] Error loading Google Classroom data:", error)
-    throw error
+    console.error("[Marshal] ❌ Sync error:", error)
   }
 }
 
@@ -690,9 +732,17 @@ async function categorizeAssignments() {
   const missedTasks = []
 
   for (const assignment of allAssignments) {
-    if (assignment.turnedIn) continue
+    // UPDATED: Skip turned-in assignments
+    if (assignment.turnedIn) {
+      console.log("[Marshal] Skipping turned-in assignment:", assignment.title)
+      continue
+    }
 
-    if (!assignment.dueDate) continue
+    // UPDATED: Skip assignments without due dates
+    if (!assignment.dueDate) {
+      console.log("[Marshal] Skipping assignment without due date:", assignment.title)
+      continue
+    }
 
     const dueDate = new Date(
       assignment.dueDate.year,
@@ -725,7 +775,9 @@ async function categorizeAssignments() {
     missedTasks: missedTasks,
   })
 
-  console.log(`[Marshal] Categorized: ${urgentTasks.length} urgent, ${missedTasks.length} missed`)
+  console.log(
+    `[Marshal] Categorized: ${urgentTasks.length} urgent, ${missedTasks.length} missed (turned-in assignments excluded)`,
+  )
 }
 
 // ===========================
@@ -1346,13 +1398,20 @@ function renderTasks() {
     .map((task, index) => {
       const originalIndex = currentTasks.indexOf(task)
       const completedClass = task.completed ? "completed" : ""
+
+      // ✨ NEW CODE ADDED HERE ✨
+      const urgencyBadgeClass = task.completed ? "finished" : task.urgency
+      const urgencyBadgeText = task.completed
+        ? "FINISHED"
+        : `${task.urgency.charAt(0).toUpperCase() + task.urgency.slice(1)} Urgency`
+
       return `
-        <div class="task-item ${completedClass}">
-          <div class="task-content">
-            <div class="task-name-row">
-              <div class="task-name">${task.title}</div>
-              <span class="task-urgency ${task.urgency}">${task.urgency.charAt(0).toUpperCase() + task.urgency.slice(1)} Urgency</span>
-            </div>
+          <div class="task-item ${completedClass}">
+            <div class="task-content">
+              <div class="task-name-row">
+                <div class="task-name">${task.title}</div>
+                <span class="task-urgency ${urgencyBadgeClass}">${urgencyBadgeText}</span>
+              </div>
             <div class="task-meta">
               <span class="task-meta-item">${task.subject || "No subject"}</span>
               <span class="task-meta-item">•</span>
@@ -1677,7 +1736,7 @@ document.querySelectorAll(".urgency-btn").forEach((btn) => {
 document.getElementById("taskNameInput")?.addEventListener("input", updateSaveChangesButton)
 document.getElementById("taskSubjectInput")?.addEventListener("input", updateSaveChangesButton)
 document.getElementById("taskDateInput")?.addEventListener("change", updateSaveChangesButton)
-document.getElementById("taskLengthInput")?.addEventListener("input", updateSaveChangesButton)
+document.getElementById("taskLengthInput")?.addEventListener("change", updateSaveChangesButton)
 
 document.getElementById("editForm")?.addEventListener("submit", (e) => {
   e.preventDefault()
@@ -2062,5 +2121,90 @@ window.addEventListener("load", () => {
   const focusStatsPage = document.getElementById("focusModeStatsPage")
   if (focusStatsPage && !focusStatsPage.classList.contains("hidden")) {
     loadFocusModeStats()
+  }
+})
+
+function startCountdownTimer() {
+  stopCountdownTimer()
+
+  // Calculate next sync time
+  chrome.storage.local.get(["lastSyncTime", "syncFrequency", "customSyncInterval"], (result) => {
+    const lastSync = result.lastSyncTime || Date.now()
+    let intervalMs = SYNC_INTERVALS[result.syncFrequency || "30"]
+
+    if (result.syncFrequency === "custom") {
+      intervalMs = (result.customSyncInterval || 30) * 60 * 1000
+    }
+
+    nextSyncTime = lastSync + intervalMs
+    updateCountdownDisplay()
+
+    autoSyncCountdownInterval = setInterval(updateCountdownDisplay, 1000)
+  })
+}
+
+function restartCountdownTimer() {
+  chrome.storage.local.set({ lastSyncTime: Date.now() }, () => {
+    startCountdownTimer()
+  })
+}
+
+function stopCountdownTimer() {
+  if (autoSyncCountdownInterval) {
+    clearInterval(autoSyncCountdownInterval)
+    autoSyncCountdownInterval = null
+  }
+}
+
+function updateCountdownDisplay() {
+  if (!nextSyncTime) return
+
+  const now = Date.now()
+  const timeRemaining = Math.max(0, nextSyncTime - now)
+
+  const minutes = Math.floor(timeRemaining / 60000)
+  const seconds = Math.floor((timeRemaining % 60000) / 1000)
+
+  const timerDisplay = document.getElementById("autoSyncTimer")
+  if (timerDisplay) {
+    timerDisplay.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+  }
+
+  // If time is up, reset for next cycle
+  if (timeRemaining === 0) {
+    restartCountdownTimer()
+  }
+}
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "performAutoSync") {
+    console.log("[Marshal] Auto-sync triggered from background worker")
+    showSyncLoadingScreen()
+
+    performSync()
+      .then(async () => {
+        console.log("[Marshal] Auto-sync completed successfully")
+        await loadTasks()
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        restartCountdownTimer()
+      })
+      .catch((error) => {
+        console.error("[Marshal] Auto-sync failed:", error)
+        restartCountdownTimer()
+      })
+      .finally(() => {
+        hideSyncLoadingScreen()
+      })
+  }
+})
+
+document.getElementById("customSyncInput")?.addEventListener("input", (e) => {
+  const customSyncSaveBtn = document.getElementById("customSyncSaveBtn")
+  const currentValue = e.target.value
+
+  if (currentValue && currentValue.trim() !== "") {
+    customSyncSaveBtn?.classList.remove("hidden")
+  } else {
+    customSyncSaveBtn?.classList.add("hidden")
   }
 })
