@@ -437,7 +437,6 @@ document.getElementById("syncNowBtn")?.addEventListener("click", async () => {
   }
   hideSyncLoadingScreen()
 })
-
 // Home page Sync button
 document.getElementById("homeSyncBtn")?.addEventListener("click", async () => {
   if (isSyncing) {

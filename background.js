@@ -381,8 +381,8 @@ async function trackBlockAttempt(hostname) {
   const weeklyStats = result.weeklyStats || {}
   weeklyStats[date] = (weeklyStats[date] || 0) + 1
 
-  // Calculate time saved (5 minutes per block)
-  const timeSaved = (result.totalTimeSaved || 0) + 5
+  // Calculate time saved (0.1 seconds per block)
+  const timeSaved = (result.totalTimeSaved || 0) + 0.1
 
   await chrome.storage.local.set({
     dailyBlockedAttempts: dailyAttempts,
