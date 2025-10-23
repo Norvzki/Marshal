@@ -32,7 +32,8 @@
   ],
 
   "host_permissions": [
-    "<all_urls>", 
+    "<all_urls>",
+    "https://marshal-proxy.vercel.app/*",
     "https://classroom.google.com/*", 
     "https://classroom.googleapis.com/*"
   ],

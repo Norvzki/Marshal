@@ -71,11 +71,6 @@ async function updateSyncStatus() {
   }
 }
 
-// Global variables for AI analysis state
-let currentAnalyzedTask = null
-let lastAiAnalysis = null
-let aiSourcePage = null
-
 // Declare originalShowPage here to fix linting error
 const originalShowPage = (pageId) => {
   document.querySelectorAll(".page").forEach((page) => {
@@ -437,6 +432,7 @@ document.getElementById("syncNowBtn")?.addEventListener("click", async () => {
   }
   hideSyncLoadingScreen()
 })
+
 // Home page Sync button
 document.getElementById("homeSyncBtn")?.addEventListener("click", async () => {
   if (isSyncing) {
@@ -1030,21 +1026,10 @@ async function loadUrgentTasksPage() {
           <p class="task-item-subject">${task.subject || "No subject"}</p>
           <p class="task-item-due">Due: ${dueDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
           ${task.link ? `<a href="${task.link}" class="view-in-classroom-btn" target="_blank">View in Google Classroom →</a>` : ""}
-          <button class="analyze-btn small" data-index="0">Analyze Task</button>
         </div>
       `
       })
       .join("")
-
-    // Attach analyze handlers using closure over tasks
-    document.querySelectorAll("#urgentTasksListPage .analyze-btn").forEach((btn, idx) => {
-      btn.dataset.index = String(idx)
-      btn.addEventListener("click", () => {
-        const t = tasks[idx]
-        aiSourcePage = 'urgentTasksPage'
-        analyzeTask(t)
-      })
-    })
   } catch (error) {
     console.error("[Marshal] Error loading urgent tasks:", error)
   }
@@ -1078,21 +1063,10 @@ async function loadMissedTasksPage() {
           <p class="task-item-subject">${task.subject || "No subject"}</p>
           <p class="task-item-due">Due: ${dueDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
           ${task.link ? `<a href="${task.link}" class="view-in-classroom-btn" target="_blank">View in Google Classroom →</a>` : ""}
-          <button class="analyze-btn small" data-index="0">Analyze Task</button>
         </div>
       `
       })
       .join("")
-
-    // Attach analyze handlers using closure over tasks
-    document.querySelectorAll("#missedTasksListPage .analyze-btn").forEach((btn, idx) => {
-      btn.dataset.index = String(idx)
-      btn.addEventListener("click", () => {
-        const t = tasks[idx]
-        aiSourcePage = 'missedTasksPage'
-        analyzeTask(t)
-      })
-    })
   } catch (error) {
     console.error("[Marshal] Error loading missed tasks:", error)
   }
@@ -1840,157 +1814,6 @@ document.getElementById("confirmationModal")?.addEventListener("click", (e) => {
     document.getElementById("confirmationModal").classList.remove("active")
     deletingTaskIndex = null
     deletingPlanId = null
-  }
-})
-
-// ===========================
-// AI ANALYSIS (Analyze Task -> Modal + Add to Plan)
-// ===========================
-
-async function analyzeTask(task) {
-  try {
-    currentAnalyzedTask = task
-    const modal = document.getElementById('aiAnalysisModal')
-    const loadingState = document.getElementById('aiLoadingState')
-    const resultsState = document.getElementById('aiResultsState')
-    const content = document.getElementById('aiAnalysisContent')
-    if (!content) return
-    // Show modal with loading state
-    if (modal) modal.classList.add('show')
-    if (loadingState) loadingState.style.display = 'block'
-    if (resultsState) resultsState.style.display = 'none'
-
-    const analysis = await analyzeAssignment(task)
-    displayAnalysisResults(analysis, task)
-  } catch (err) {
-    console.error('[Marshal] Analyze failed:', err)
-    alert('Failed to analyze assignment. Please try again.')
-    document.getElementById('aiAnalysisModal')?.classList.remove('show')
-    currentAnalyzedTask = null
-  }
-}
-
-function displayAnalysisResults(analysis, task) {
-  const loadingState = document.getElementById('aiLoadingState')
-  const resultsState = document.getElementById('aiResultsState')
-  const content = document.getElementById('aiAnalysisContent')
-  if (!content) return
-
-  lastAiAnalysis = analysis
-
-  const stepsHTML = (analysis.breakdown || []).map((step, i) => `
-    <div class="ai-step">
-      <div class="step-number">${i + 1}</div>
-      <div class="step-info">
-        <div class="step-title">${step.step}</div>
-        <div class="step-desc">${step.description}</div>
-        <div class="step-time">⏰ ${step.estimatedTime}</div>
-      </div>
-    </div>
-  `).join('')
-
-  const tipsHTML = ((analysis.strategy && analysis.strategy.tips) || []).map((tip) => `
-    <li class="ai-tip">${tip}</li>
-  `).join('')
-
-  const urgency = analysis.urgency || 'medium'
-  const urgencyClass = `badge-urgency-${urgency}`
-
-  content.innerHTML = `
-    <h3 style="font-size: 18px; font-weight: 700; color: #1f2937; margin-bottom: 8px;">${task.title || 'Assignment'}</h3>
-    <div class="ai-summary">${analysis.summary || 'AI analysis generated successfully.'}</div>
-    <div class="ai-badges">
-      <span class="ai-badge ${urgencyClass}">⚡ ${(urgency || 'medium').toUpperCase()}</span>
-      <span class="ai-badge badge-time">⏰ ${analysis.totalTimeEstimate || 'Variable'}</span>
-    </div>
-    <div class="ai-section">
-      <div class="ai-section-title">📝 What To Do</div>
-      <div class="ai-steps">${stepsHTML || '<p>No steps available</p>'}</div>
-    </div>
-    <div class="ai-section">
-      <div class="ai-section-title">💡 Strategy & Tips</div>
-      <p style="font-size: 14px; color: #374151; line-height: 1.6; margin-bottom: 12px;">${(analysis.strategy && analysis.strategy.approach) || 'Break the work into manageable chunks and stay focused.'}</p>
-      <ul class="ai-tips">${tipsHTML || '<li class="ai-tip">Work in focused sessions</li>'}</ul>
-    </div>
-    <div class="ai-section">
-      <div class="ai-section-title">⏰ Recommendation</div>
-      <div class="ai-recommendation">${analysis.recommendedStartTime || 'Start as soon as possible to ensure quality work.'}</div>
-    </div>
-  `
-
-  if (loadingState) loadingState.style.display = 'none'
-  if (resultsState) resultsState.style.display = 'flex'
-}
-
-function closeAiModal() {
-  const modal = document.getElementById('aiAnalysisModal')
-  modal?.classList.remove('show')
-  currentAnalyzedTask = null
-  lastAiAnalysis = null
-  // Navigate back to originating list page if known
-  if (aiSourcePage) {
-    showPage(aiSourcePage)
-  }
-  aiSourcePage = null
-}
-
-async function addAnalyzedTaskToPlan() {
-  if (!currentAnalyzedTask) return
-  try {
-    const analysis = lastAiAnalysis || await analyzeAssignment(currentAnalyzedTask)
-    const planTasks = (analysis.breakdown || []).map((step) => ({
-      title: `${currentAnalyzedTask.title} - ${step.step}`,
-      subject: currentAnalyzedTask.subject || 'General',
-      dueDate: currentAnalyzedTask.dueDate,
-      taskLength: step.estimatedTime,
-      urgency: analysis.urgency || 'medium',
-      completed: false,
-    }))
-    const studyPlan = {
-      id: Date.now(),
-      title: `${currentAnalyzedTask.title} - AI Plan`,
-      createdAt: new Date().toISOString(),
-      tasks: planTasks,
-      schedule: planTasks.map((t) => ({
-        task: t.title,
-        date: t.dueDate ? new Date(t.dueDate).toLocaleDateString() : new Date().toLocaleDateString(),
-        duration: t.taskLength,
-        priority: (analysis.urgency || 'medium') === 'high' ? 'High' : 'Medium',
-        completed: false,
-      })),
-      type: 'ai',
-      completed: false,
-    }
-    const result = await chrome.storage.local.get('studyPlans')
-    const plans = result.studyPlans || []
-    plans.unshift(studyPlan)
-    await chrome.storage.local.set({ studyPlans: plans })
-    closeAiModal()
-    alert('Study plan created! 🎉')
-    setTimeout(() => showPage('studyPlansPage'), 300)
-  } catch (err) {
-    console.error('[Marshal] Error adding analyzed plan:', err)
-    alert('Failed to create study plan.')
-  }
-}
-
-// Use delegation to ensure handlers are bound regardless of render timing
-document.addEventListener('click', (e) => {
-  const el = e.target
-  if (!(el instanceof Element)) return
-  if (el.closest('#closeAiModal') || el.closest('#closeAiBtn')) {
-    e.preventDefault()
-    closeAiModal()
-    return
-  }
-  if (el.closest('#addToPlanBtn')) {
-    e.preventDefault()
-    addAnalyzedTaskToPlan()
-    return
-  }
-  if (el.id === 'aiAnalysisModal') {
-    // click outside modal content closes
-    closeAiModal()
   }
 })
 

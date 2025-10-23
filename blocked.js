@@ -66,26 +66,7 @@ document.getElementById('openMarshalBtn').addEventListener('click', () => {
   chrome.runtime.sendMessage({ action: 'openStatsPage' })
 })
 
-// Add click handler for remove site buttons
-document.addEventListener('click', async (e) => {
-  if (e.target.closest('.remove-site-btn')) {
-    const btn = e.target.closest('.remove-site-btn')
-    const site = btn.dataset.site
-    const kind = btn.dataset.kind
-    
-    if (kind === 'custom') {
-      await chrome.runtime.sendMessage({ action: 'removeCustomSite', site })
-    } else {
-      await chrome.runtime.sendMessage({ action: 'toggleDefaultSite', site })
-    }
-    
-    loadBlockedSites()
-    showNotification(`${site} removed from blocked list`, 'success')
-  }
-})
-
 // Initialize on page load
 loadDailyQuote()
 loadStats()
 setInterval(loadStats, 3000)
-

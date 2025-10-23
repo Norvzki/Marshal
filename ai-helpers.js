@@ -395,4 +395,3 @@ function getTimeOfDay(hour) {
 }
 
 console.log('[Marshal AI] AI Helpers ready with Focus Insights!')
-
