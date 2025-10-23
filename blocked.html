@@ -69,6 +69,7 @@
     .header-badge img {
       width: 24px;
       height: 24px;
+      object-fit: contain;
     }
 
     .header-badge-text {
@@ -190,6 +191,21 @@
       background: linear-gradient(135deg, #d91e63 0%, #c2185b 100%);
       color: white;
     }
+
+    /* If logo fails to load, show emoji fallback */
+    .header-badge img {
+      display: block;
+    }
+    
+    .logo-fallback {
+      display: none;
+      font-size: 24px;
+    }
+    
+    .header-badge img[src=""]:after,
+    .header-badge img:not([src]) {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -197,9 +213,8 @@
   
   <div class="container">
     <div class="header-badge">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2L8 6H4V10L2 12L4 14V18H8L12 22L16 18H20V14L22 12L20 10V6H16L12 2Z" fill="url(%23gradient)" stroke="%23d91e63" stroke-width="1"/>
-      </svg>
+      <!-- Your Marshal Logo -->
+      <img id="logoImg" alt="Marshal Logo">
       <span class="header-badge-text">Marshal</span>
     </div>
 
@@ -237,75 +252,6 @@
     </div>
   </div>
 
-  <script>
-    async function loadDailyQuote() {
-      try {
-        const response = await fetch(chrome.runtime.getURL('quotes.json'))
-        const data = await response.json()
-        const quotes = data.quotes
-
-        const now = new Date()
-        const start = new Date(now.getFullYear(), 0, 0)
-        const diff = now - start
-        const oneDay = 1000 * 60 * 60 * 24
-        const dayOfYear = Math.floor(diff / oneDay)
-
-        const quoteIndex = dayOfYear % quotes.length
-        document.getElementById('dailyQuote').textContent = `"${quotes[quoteIndex]}"`
-      } catch (error) {
-        console.error('Error loading quote:', error)
-      }
-    }
-
-    function loadStats() {
-      chrome.storage.local.get([
-        'dailyBlockedAttempts',
-        'totalTimeSaved'
-      ], (result) => {
-        const attempts = result.dailyBlockedAttempts || 0
-        const timeSavedMinutes = result.totalTimeSaved || 0
-
-        const hours = Math.floor(timeSavedMinutes / 60)
-        const minutes = timeSavedMinutes % 60
-        let timeDisplay = ''
-        if (hours > 0) {
-          timeDisplay = `${hours}h ${minutes}m`
-        } else if (minutes > 0) {
-          timeDisplay = `${minutes}m`
-        } else {
-          timeDisplay = '0m'
-        }
-
-        document.getElementById('timeSavedStat').textContent = timeDisplay
-        document.getElementById('blocksMadeStat').textContent = attempts
-        
-        console.log("[v0] Stats loaded - Attempts:", attempts, "Time Saved:", timeSavedMinutes, "Display:", timeDisplay)
-      })
-    }
-
-    document.getElementById('viewAnalyticsBtn').addEventListener('click', () => {
-      console.log("[v0] View Analytics clicked")
-      chrome.runtime.sendMessage({ action: 'openPopup' }, (response) => {
-        console.log("[v0] Popup opened, response:", response)
-        setTimeout(() => {
-          chrome.runtime.sendMessage({ action: 'showPage', page: 'focusModeStatsPage' }, (response) => {
-            console.log("[v0] Stats page shown, response:", response)
-          })
-        }, 500)
-      })
-    })
-
-    document.getElementById('openMarshalBtn').addEventListener('click', () => {
-      console.log("[v0] Open Marshal clicked")
-      chrome.runtime.sendMessage({ action: 'openPopup' }, (response) => {
-        console.log("[v0] Popup opened, response:", response)
-      })
-    })
-
-    // Initialize on page load
-    loadDailyQuote()
-    loadStats()
-    setInterval(loadStats, 1000)
-  </script>
+  <script src="blocked.js"></script>
 </body>
 </html>
