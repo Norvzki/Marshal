@@ -53,23 +53,37 @@ const DEFAULT_BLOCKED_SITES = [
 let studyModeActive = false
 let customBlockedSites = []
 let disabledDefaultSites = []
+let disabledCustomSites = []
 
-// Load study mode state and custom sites on startup
-chrome.storage.local.get(["studyModeActive", "customBlockedSites", "disabledDefaultSites", "disabledDefault"], (result) => {
-  studyModeActive = result.studyModeActive || false
-  customBlockedSites = result.customBlockedSites || []
-  // Merge legacy/UI key 'disabledDefault' with canonical 'disabledDefaultSites'
-  const fromCanonical = result.disabledDefaultSites || []
-  const fromUiKey = result.disabledDefault || []
-  disabledDefaultSites = Array.from(new Set([...(fromCanonical || []), ...(fromUiKey || [])]))
-  // Persist merged state back to both keys for consistency
-  chrome.storage.local.set({ disabledDefaultSites, disabledDefault: disabledDefaultSites })
+// Update the initialization section to load disabled custom sites
+chrome.storage.local.get(
+  ["studyModeActive", "customBlockedSites", "disabledDefaultSites", "disabledDefault", "disabledCustomSites"], 
+  (result) => {
+    studyModeActive = result.studyModeActive || false
+    customBlockedSites = result.customBlockedSites || []
+    
+    // Merge legacy/UI key 'disabledDefault' with canonical 'disabledDefaultSites'
+    const fromCanonical = result.disabledDefaultSites || []
+    const fromUiKey = result.disabledDefault || []
+    disabledDefaultSites = Array.from(new Set([...(fromCanonical || []), ...(fromUiKey || [])]))
+    
+    // Load disabled custom sites
+    disabledCustomSites = result.disabledCustomSites || []
+    
+    // Persist merged state back to both keys for consistency
+    chrome.storage.local.set({ 
+      disabledDefaultSites, 
+      disabledDefault: disabledDefaultSites,
+      disabledCustomSites
+    })
 
-  console.log("[Marshal Background] Study mode:", studyModeActive ? "ON" : "OFF")
-  console.log("[Marshal Background] Custom blocked sites:", customBlockedSites)
-  console.log("[Marshal Background] Disabled default sites:", disabledDefaultSites)
-  updateBlockingRules()
-})
+    console.log("[Marshal Background] Study mode:", studyModeActive ? "ON" : "OFF")
+    console.log("[Marshal Background] Custom blocked sites:", customBlockedSites)
+    console.log("[Marshal Background] Disabled default sites:", disabledDefaultSites)
+    console.log("[Marshal Background] Disabled custom sites:", disabledCustomSites)
+    updateBlockingRules()
+  }
+)
 
 // Listen for messages from popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -123,12 +137,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ success: true })
     return true
   }
+
+  // NEW: Handle custom site enable/disable
+  if (message.action === "disableCustomSite") {
+    disableCustomSite(message.site)
+    sendResponse({ success: true })
+    return true
+  }
+  
+  if (message.action === "enableCustomSite") {
+    enableCustomSite(message.site)
+    sendResponse({ success: true })
+    return true
+  }
   
   if (message.action === "getBlockedSites") {
     sendResponse({ 
       default: DEFAULT_BLOCKED_SITES,
       custom: customBlockedSites,
-      disabledDefault: disabledDefaultSites
+      disabledDefault: disabledDefaultSites,
+      disabledCustom: disabledCustomSites
     })
     return true
   }
@@ -146,6 +174,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true // keep async channel open
   }
 })
+
+// NEW: Functions to handle custom site enable/disable
+async function disableCustomSite(site) {
+  if (!disabledCustomSites.includes(site)) {
+    disabledCustomSites.push(site)
+    await chrome.storage.local.set({ disabledCustomSites })
+    console.log("[Marshal Background] Disabled custom site:", site)
+    if (studyModeActive) {
+      updateBlockingRules()
+    }
+  }
+}
+
+async function enableCustomSite(site) {
+  if (disabledCustomSites.includes(site)) {
+    disabledCustomSites = disabledCustomSites.filter(s => s !== site)
+    await chrome.storage.local.set({ disabledCustomSites })
+    console.log("[Marshal Background] Enabled custom site:", site)
+    if (studyModeActive) {
+      updateBlockingRules()
+    }
+  }
+}
 
 async function addCustomBlockedSite(site) {
   if (!customBlockedSites.includes(site)) {
@@ -202,12 +253,12 @@ async function enableDefaultSite(site) {
   }
 }
 
-// âš¡ MANIFEST V3: Use declarativeNetRequest for blocking
+// MANIFEST V3: Use declarativeNetRequest for blocking
+// Update the updateBlockingRules function to consider disabled custom sites
 async function updateBlockingRules() {
   console.log("[Marshal Background] 🔄 Updating blocking rules...")
 
   try {
-    // Remove all existing dynamic rules first
     const existingRules = await chrome.declarativeNetRequest.getDynamicRules()
     const ruleIdsToRemove = existingRules.map(rule => rule.id)
 
@@ -219,7 +270,7 @@ async function updateBlockingRules() {
     }
 
     if (!studyModeActive) {
-      console.log("[Marshal Background] ❌ Study mode OFF - no rules added")
+      console.log("[Marshal Background] ⛔ Study mode OFF - no rules added")
       return
     }
 
@@ -227,8 +278,13 @@ async function updateBlockingRules() {
     const enabledDefaultSites = DEFAULT_BLOCKED_SITES.filter(
       site => !disabledDefaultSites.includes(site)
     )
+    
+    // Get enabled custom sites
+    const enabledCustomSites = customBlockedSites.filter(
+      site => !disabledCustomSites.includes(site)
+    )
 
-    const allBlockedSites = [...enabledDefaultSites, ...customBlockedSites]
+    const allBlockedSites = [...enabledDefaultSites, ...enabledCustomSites]
 
     if (allBlockedSites.length === 0) {
       console.log("[Marshal Background] ⚠️ No sites to block")
@@ -237,7 +293,6 @@ async function updateBlockingRules() {
 
     console.log("[Marshal Background] 🚫 Blocking sites:", allBlockedSites)
 
-    // Create blocking rules
     const rules = []
     let ruleId = 1
 
@@ -287,7 +342,6 @@ async function updateBlockingRules() {
       })
     }
 
-    // Add all rules at once
     await chrome.declarativeNetRequest.updateDynamicRules({
       addRules: rules
     })
@@ -296,7 +350,7 @@ async function updateBlockingRules() {
     console.log("[Marshal Background] 🎯 Study Mode is now ACTIVE and blocking!")
 
   } catch (error) {
-    console.error("[Marshal Background] ❌ Error updating rules:", error)
+    console.error("[Marshal Background] ⛔ Error updating rules:", error)
   }
 }
 

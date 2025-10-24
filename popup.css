@@ -2031,20 +2031,22 @@ body {
   gap: 8px;
 }
 
+/*change here*/
 .site-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 240, 255, 0.9) 100%);
-  border: 2px solid rgba(229, 231, 235, 0.6);
-  border-radius: 12px;
-  transition: all 0.2s;
+  padding: 16px;  /* Keep this */
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 240, 255, 0.9) 100%);  /* Keep this */
+  border: 2px solid rgba(229, 231, 235, 0.6);  /* Keep this */
+  border-radius: 16px;  /* Change from 12px to 16px */
+  transition: all 0.2s;  /* Keep this */
 }
 
 .site-item:hover {
   border-color: rgba(217, 70, 239, 0.3);
   box-shadow: 0 4px 12px rgba(217, 70, 239, 0.1);
+  /* Remove transform if it exists */
 }
 
 .site-item.default {
@@ -2053,39 +2055,13 @@ body {
 
 .site-item.disabled {
   opacity: 0.5;
-  background: linear-gradient(135deg, rgba(254, 226, 226, 0.5) 0%, rgba(254, 202, 202, 0.5) 100%);
+  background: linear-gradient(135deg, rgba(243, 244, 246, 0.9) 0%, rgba(249, 250, 251, 0.9) 100%);
+  /* Remove old filter: blur() if it exists */
 }
 
 .site-item.disabled .site-name {
-  text-decoration: line-through;
   color: #9ca3af;
-}
-
-.toggle-site-btn {
-  padding: 6px 16px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.toggle-site-btn:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  transform: scale(1.05);
-}
-
-.site-item.disabled .toggle-site-btn {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-}
-
-.site-item.disabled .toggle-site-btn:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  text-decoration: line-through;
 }
 
 .site-icon {
@@ -2099,35 +2075,35 @@ body {
   color: #1f2937;
 }
 
-.site-badge {
-  padding: 4px 12px;
-  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-  color: white;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+/* NEW - Controls container */
+.site-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.remove-site-btn {
+/* NEW - Delete button for custom sites */
+.delete-site-btn {
   background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
   border: none;
   color: #dc2626;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
-.remove-site-btn:hover {
+.delete-site-btn:hover {
   background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
+
+/*end of the change*/
 
 /* ===========================
    TASK LINK STYLES

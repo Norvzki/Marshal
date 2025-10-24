@@ -2175,68 +2175,130 @@ function renderBlockedSitesList(blockedSites) {
     .join("")
 }
 // ===========================
-// MANAGE BLOCKED SITES PAGE
+// MANAGE BLOCKED SITES PAGE - IMPROVED LOGIC
+// Replace the existing loadBlockedSites() function in popup.js
 // ===========================
+
 async function loadBlockedSites() {
   const response = await chrome.runtime.sendMessage({ action: "getBlockedSites" })
   const defaultSites = response.default || []
   const customSites = response.custom || []
-  // Read disabled defaults from local storage so removal persists in UI
-  const storage = await chrome.storage.local.get(["disabledDefault"]) 
-  const disabledDefault = storage.disabledDefault || []
+  const disabledDefaultSites = response.disabledDefault || []
+  const disabledCustomSites = response.disabledCustom || []
 
-  // Build combined list: enabled defaults + custom
-  const defaultSitesToShow = defaultSites.filter((s) => !disabledDefault.includes(s))
-  const combinedSites = [
-    ...defaultSitesToShow.map((s) => ({ site: s, kind: "default" })),
-    ...customSites.map((s) => ({ site: s, kind: "custom" })),
-  ]
-
-  // Render into the custom list container as a unified list
+  // Render Default Blocked Sites
   const defaultContainer = document.getElementById("defaultSitesList")
-  if (defaultContainer) defaultContainer.innerHTML = ""
-
-  const customContainer = document.getElementById("customSitesList")
-  if (combinedSites.length === 0) {
-    customContainer.innerHTML = '<div class="empty-state"><p>No blocked sites yet</p></div>'
+  if (defaultSites.length === 0) {
+    defaultContainer.innerHTML = '<div class="empty-state"><p>No default sites available</p></div>'
   } else {
-    customContainer.innerHTML = combinedSites
-      .map(({ site, kind }) => {
-        const icon = kind === "default" ? "🔒" : "🚫"
+    defaultContainer.innerHTML = defaultSites
+      .map((site) => {
+        const isDisabled = disabledDefaultSites.includes(site)
+        const disabledClass = isDisabled ? 'disabled' : ''
+        const checkedAttr = isDisabled ? '' : 'checked'
+        
         return `
-          <div class="site-item ${kind}">
-            <span class="site-icon">${icon}</span>
+          <div class="site-item default ${disabledClass}">
+            <span class="site-icon">🔒</span>
             <span class="site-name">${site}</span>
-            <button class="remove-site-btn" data-kind="${kind}" data-site="${site}">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
+            <div class="site-controls">
+              <label class="toggle-switch">
+                <input type="checkbox" class="default-site-toggle" data-site="${site}" ${checkedAttr}>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
           </div>
         `
       })
       .join("")
 
-    document.querySelectorAll(".remove-site-btn").forEach((btn) => {
-      btn.addEventListener("click", async (e) => {
-        const site = e.currentTarget.dataset.site
-        const kind = e.currentTarget.dataset.kind
-        if (kind === "custom") {
-          await chrome.runtime.sendMessage({ action: "removeCustomSite", site })
+    // Attach event listeners for default site toggles
+    document.querySelectorAll(".default-site-toggle").forEach((toggle) => {
+      toggle.addEventListener("change", async (e) => {
+        const site = e.target.dataset.site
+        const isEnabled = e.target.checked
+        
+        if (isEnabled) {
+          // Enable the site (remove from disabled list)
+          await chrome.runtime.sendMessage({ action: "enableDefaultSite", site })
         } else {
-          const current = (await chrome.storage.local.get(["disabledDefault"]))?.disabledDefault || []
-          const next = Array.from(new Set([...current, site]))
-          await chrome.storage.local.set({ disabledDefault: next })
-          try { await chrome.runtime.sendMessage({ action: "disableDefaultSite", site }) } catch {}
+          // Disable the site (add to disabled list)
+          await chrome.runtime.sendMessage({ action: "disableDefaultSite", site })
         }
+        
+        // Reload to update UI
         loadBlockedSites()
       })
     })
   }
-  // Removed toggle handlers; only X remove buttons remain
+
+  // Render Customized Blocked Sites
+  const customContainer = document.getElementById("customSitesList")
+  if (customSites.length === 0) {
+    customContainer.innerHTML = '<div class="empty-state"><p>No custom sites yet</p></div>'
+  } else {
+    customContainer.innerHTML = customSites
+      .map((site) => {
+        const isDisabled = disabledCustomSites.includes(site)
+        const disabledClass = isDisabled ? 'disabled' : ''
+        const checkedAttr = isDisabled ? '' : 'checked'
+        
+        return `
+          <div class="site-item custom ${disabledClass}">
+            <span class="site-icon">🚫</span>
+            <span class="site-name">${site}</span>
+            <div class="site-controls">
+              <button class="delete-site-btn" data-site="${site}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                </svg>
+              </button>
+              <label class="toggle-switch">
+                <input type="checkbox" class="custom-site-toggle" data-site="${site}" ${checkedAttr}>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        `
+      })
+      .join("")
+
+    // Attach event listeners for custom site delete buttons
+    document.querySelectorAll(".delete-site-btn").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        const site = e.currentTarget.dataset.site
+        
+        // Confirm deletion
+        if (confirm(`Are you sure you want to permanently delete "${site}" from your blocked sites?`)) {
+          await chrome.runtime.sendMessage({ action: "removeCustomSite", site })
+          showNotification(`${site} removed from blocked list`, "success")
+          loadBlockedSites()
+        }
+      })
+    })
+
+    // Attach event listeners for custom site toggles
+    document.querySelectorAll(".custom-site-toggle").forEach((toggle) => {
+      toggle.addEventListener("change", async (e) => {
+        const site = e.target.dataset.site
+        const isEnabled = e.target.checked
+        
+        if (isEnabled) {
+          // Enable the site
+          await chrome.runtime.sendMessage({ action: "enableCustomSite", site })
+        } else {
+          // Disable the site (temporarily)
+          await chrome.runtime.sendMessage({ action: "disableCustomSite", site })
+        }
+        
+        // Reload to update UI
+        loadBlockedSites()
+      })
+    })
+  }
 }
 
+// Keep existing add site button handler
 document.getElementById("addSiteBtn")?.addEventListener("click", async () => {
   const input = document.getElementById("newSiteInput")
   let site = input.value.trim()
