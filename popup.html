@@ -540,7 +540,8 @@
     </div>
   </div>
 
-  <!-- MANAGE BLOCKED SITES PAGE -->
+   <!-- MANAGE BLOCKED SITES PAGE -->
+<!-- MANAGE BLOCKED SITES PAGE - Replace the existing manageSitesPage section -->
 <div class="page hidden" id="manageSitesPage">
   <div class="container">
     <header class="header">
@@ -573,13 +574,16 @@
       </div>
 
       <div class="sites-section">
-        <!-- Default sites section removed (merged into unified list) -->
+        <h3 class="section-title">Default Blocked Sites</h3>
+        <div class="sites-list" id="defaultSitesList">
+          <!-- Default sites with toggles will be loaded here -->
+        </div>
       </div>
 
       <div class="sites-section">
-        <h3 class="section-title">Your Custom Sites</h3>
+        <h3 class="section-title">Customized Blocked Sites</h3>
         <div class="sites-list" id="customSitesList">
-          <!-- Custom sites will be loaded here -->
+          <!-- Custom sites with toggles and delete buttons will be loaded here -->
         </div>
       </div>
     </div>
