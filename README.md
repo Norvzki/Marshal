@@ -130,7 +130,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🏆 Cebu Hacktoberfest 2025
 
-Created by the **Marshal Development Team** - students passionate about education technology and open-source development.
+Created by the **"Andrei and friends Team"** - students passionate about education technology and open-source development.
 
 **Mission:** Empower students with better tools for academic success through technology.
 
