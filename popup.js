@@ -109,15 +109,21 @@ function showSyncLoadingScreen() {
   const overlay = document.getElementById("syncLoadingOverlay")
   if (overlay) {
     overlay.classList.remove("hidden")
-    const container = overlay.querySelector(".sync-loading-container")
-    container.classList.remove("success")
+    const loadingContainer = overlay.querySelector(".sync-loading-container:not(.sync-success-container):not(.sync-error-container)")
+    const successContainer = document.getElementById("syncSuccessContainer")
+    const errorContainer = document.getElementById("syncErrorContainer")
+    
+    // Show loading, hide success and error
+    if (loadingContainer) loadingContainer.classList.remove("hidden")
+    if (successContainer) successContainer.classList.add("hidden")
+    if (errorContainer) errorContainer.classList.add("hidden")
   }
 }
 
 function hideSyncLoadingScreen() {
   const overlay = document.getElementById("syncLoadingOverlay")
   if (overlay) {
-    const loadingContainer = overlay.querySelector(".sync-loading-container:not(.sync-success-container)")
+    const loadingContainer = overlay.querySelector(".sync-loading-container:not(.sync-success-container):not(.sync-error-container)")
     const successContainer = document.getElementById("syncSuccessContainer")
 
     // Hide the loading container
@@ -131,6 +137,31 @@ function hideSyncLoadingScreen() {
     }
 
     // Wait for success animation to complete, then hide overlay and show home page
+    setTimeout(() => {
+      overlay.classList.add("hidden")
+      isSyncing = false
+      showPage("homePage")
+    }, 1500)
+  }
+}
+
+function showSyncErrorScreen() {
+  const overlay = document.getElementById("syncLoadingOverlay")
+  if (overlay) {
+    const loadingContainer = overlay.querySelector(".sync-loading-container:not(.sync-success-container):not(.sync-error-container)")
+    const errorContainer = document.getElementById("syncErrorContainer")
+
+    // Hide the loading container
+    if (loadingContainer) {
+      loadingContainer.classList.add("hidden")
+    }
+
+    // Show the error container
+    if (errorContainer) {
+      errorContainer.classList.remove("hidden")
+    }
+
+    // Wait for error animation to complete, then hide overlay and show home page
     setTimeout(() => {
       overlay.classList.add("hidden")
       isSyncing = false
@@ -252,9 +283,6 @@ async function performSync() {
   } catch (error) {
     console.error("[Marshal] Sync error in performSync:", error)
     console.error("[Marshal] Error details:", error.message)
-
-    alert("Sync failed: " + error.message + "\n\nPlease check the console (F12) for more details.")
-
     throw error
   }
 }
@@ -514,8 +542,9 @@ document.getElementById("syncNowBtn")?.addEventListener("click", async () => {
   } catch (error) {
     console.error("[v0] SYNC FAILED - Error:", error)
     console.error("[v0] Error message:", error.message)
-    alert("Sync failed: " + error.message)
     await new Promise((resolve) => setTimeout(resolve, 1000))
+    showSyncErrorScreen()
+    return
   }
   hideSyncLoadingScreen()
 })
@@ -536,9 +565,11 @@ document.getElementById("homeSyncBtn")?.addEventListener("click", async () => {
     await loadTasks()
     await new Promise((resolve) => setTimeout(resolve, 1000))
   } catch (error) {
-    console.error("[v0] SYNC FAILED - Error:", error)
-    alert("Sync failed: " + error.message)
+    console.error("[Marshal] SYNC FAILED - Error:", error)
+    console.error("[Marshal] Error message:", error.message)
     await new Promise((resolve) => setTimeout(resolve, 1000))
+    showSyncErrorScreen()
+    return
   }
   hideSyncLoadingScreen()
 })
@@ -853,6 +884,7 @@ async function loadGoogleClassroomData() {
     console.log(`[Marshal] ✅ Sync completed in ${elapsed}s (${allAssignments.length} assignments)`)
   } catch (error) {
     console.error("[Marshal] ❌ Sync error:", error)
+    throw error // Re-throw to propagate error to performSync
   }
 }
 
