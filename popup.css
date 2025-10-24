@@ -2782,12 +2782,13 @@ body.dark-mode .site-name {
 }
 
 /* ===========================
-   MANAGE BLOCKED SITES PAGE STYLES
+   MANAGE BLOCKED SITES - COMPACT DESIGN
+   Replace the existing manage sites styles with these
    =========================== */
 
 .add-site-section {
-  margin-bottom: 32px;
-  padding: 20px;
+  margin-bottom: 24px;
+  padding: 16px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 240, 255, 0.9) 100%);
   border: 2px solid rgba(229, 231, 235, 0.6);
   border-radius: 16px;
@@ -2804,17 +2805,76 @@ body.dark-mode .add-site-section {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.add-site-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+/* Section Title */
+.add-site-section .section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #6b7280;
+  letter-spacing: 0.5px;
   margin-bottom: 12px;
+  text-transform: uppercase;
 }
 
-.help-text {
+/* Form Container - Input + Button in one row */
+.add-site-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  align-items: stretch;
+}
+
+/* Input Field Styling */
+.add-site-form .form-input {
+  flex: 1;
+  padding: 10px 14px;
   font-size: 13px;
-  color: #6b7280;
-  line-height: 1.5;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 240, 255, 0.95) 100%);
+  border: 2px solid rgba(229, 231, 235, 0.6);
+  transition: all 0.2s;
+}
+
+.add-site-form .form-input:focus {
+  outline: none;
+  border-color: #d946ef;
+  box-shadow: 0 2px 8px rgba(217, 70, 239, 0.15);
+}
+
+.add-site-form .form-input::placeholder {
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+/* Add Site Button - More Compact */
+.add-site-btn {
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #d946ef 0%, #c026d3 50%, #a855f7 100%);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(217, 70, 239, 0.4);
+}
+
+.add-site-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(217, 70, 239, 0.5);
+}
+
+.add-site-btn:active {
+  transform: translateY(0);
+}
+
+/* Help Text */
+.add-site-section .help-text {
+  font-size: 11px;
+  color: #9ca3af;
+  line-height: 1.4;
   font-style: italic;
   transition: color 0.3s ease;
 }
@@ -2824,10 +2884,34 @@ body.dark-mode .help-text {
   color: #9ca3af;
 }
 
+/* Remove conflicting styles if they exist */
+.add-site-form .save-plan-btn {
+  display: none; /* Hide if accidentally used */
+}
+
+.help-text {
+  font-size: 11px;
+  color: #9ca3af;
+  line-height: 1.4;
+  font-style: italic;
+  margin: 0;
+}
+
+/* Section Headers - More Compact */
 .sites-section {
   margin-bottom: 24px;
 }
 
+.section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #6b7280;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+/* Sites List */
 .sites-list {
   display: flex;
   flex-direction: column;
@@ -2849,10 +2933,6 @@ body.dark-mode .help-text {
 .site-item:hover {
   border-color: rgba(217, 70, 239, 0.3);
   box-shadow: 0 4px 12px rgba(217, 70, 239, 0.1);
-}
-
-.site-item.default {
-  background: linear-gradient(135deg, rgba(243, 244, 246, 0.9) 0%, rgba(249, 250, 251, 0.9) 100%);
 }
 
 .site-item.disabled {
@@ -2934,6 +3014,52 @@ body.dark-mode .site-item.disabled .site-name {
   transform: scale(1.05);
 }
 
+.delete-site-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Smaller Toggle Switch */
+.site-item .toggle-switch {
+  width: 44px;
+  height: 24px;
+}
+
+.site-item .toggle-slider::before {
+  width: 18px;
+  height: 18px;
+  top: 1px;
+  left: 1px;
+}
+
+.site-item .toggle-switch input:checked + .toggle-slider::before {
+  left: 23px;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 30px 20px;
+  color: #9ca3af;
+}
+
+.empty-state p {
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Adjust content padding */
+#manageSitesPage .content {
+  padding: 20px;
+}
+
+/* Back button more compact */
+#manageSitesPage .back-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
 /*end of the change*/
 
 /* ===========================
