@@ -1919,10 +1919,111 @@ body.dark-mode .option-btn-title {
   color: #3b82f6;
 }
 
+.grade-count {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
 .no-grades {
   text-align: center;
   padding: 60px 20px;
   color: #9ca3af;
+}
+
+body.dark-mode .no-grades {
+  color: #6b7280;
+}
+
+.ai-box {
+  background: #f0f4ff;
+  border-left: 4px solid #3b82f6;
+  padding: 16px;
+  margin-top: 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.ai-box h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.ai-box p {
+  margin: 0;
+  color: #374151;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.ai-box p strong {
+  font-weight: 700;
+  color: #1e40af;
+}
+
+.ai-box p em {
+  font-style: italic;
+}
+
+/* Dark Mode - GWA Page Elements */
+body.dark-mode .gwa-container {
+  background: transparent;
+}
+
+body.dark-mode .gwa-display {
+  color: #e5e7eb;
+}
+
+body.dark-mode .gwa-label {
+  color: #9ca3af;
+}
+
+body.dark-mode .grade-item {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.4) 0%, rgba(31, 41, 55, 0.4) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .grade-subject {
+  color: #f3f4f6;
+}
+
+body.dark-mode .grade-value {
+  color: #60a5fa;
+}
+
+body.dark-mode .grade-count {
+  color: #9ca3af;
+}
+
+body.dark-mode .ai-box {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-left: 4px solid #60a5fa;
+}
+
+body.dark-mode .ai-box h3 {
+  color: #60a5fa;
+}
+
+body.dark-mode .ai-box p {
+  color: #d1d5db;
+}
+
+body.dark-mode .ai-box p strong {
+  color: #93c5fd;
+}
+
+body.dark-mode .ai-box p em {
+  color: #d1d5db;
 }
 
 /* ===========================

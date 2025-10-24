@@ -4,6 +4,9 @@
 // @ts-ignore - chrome is a global API provided by the browser extension runtime
 const chrome_api = chrome
 
+// Import GeminiClient for AI advice
+import { GeminiClient } from "./geminiClient.js"
+
 // popup.js
 // ===========================
 // PAGE NAVIGATION SYSTEM
@@ -367,8 +370,72 @@ document.getElementById("missedTasksBtn")?.addEventListener("click", () => {
   showPage("missedTasksPage")
 })
 
-document.getElementById("gwaBtn")?.addEventListener("click", () => {
+document.getElementById("gwaBtn")?.addEventListener("click", async () => {
+  console.log("[Gemini] GWA button clicked")
+
+  // Load GWA page and grades
   showPage("gwaPage")
+  await loadGrades()
+
+  // IMPORTANT: Wait for GWA to be calculated first
+  const gwaText = document.getElementById("gwaDisplay")?.textContent
+  if (!gwaText || gwaText === "--") {
+    console.warn("[Gemini] No valid GWA found")
+    
+    // Update AI box to show helpful message
+    const aiBox = document.getElementById("aiSuggestionBox")
+    if (aiBox) {
+      aiBox.innerHTML = `
+        <h3>AI Study Advice 🤖</h3>
+        <p>📚 No grades available yet. Once your teacher returns graded work in Google Classroom, I'll provide personalized study advice!</p>
+      `
+    }
+    return
+  }
+
+  // Generate AI advice based on GWA
+  const prompt = `Say "My current GWA is ${gwaText}. Based on this GWA, suggest 3 brief ways to improve my academic performance. Keep it 3 sentences and be encouraging. Seperate each sentences by \\n's`
+
+  try {
+    console.log("[Gemini] Sending prompt:", prompt)
+    const aiBox = document.getElementById("aiSuggestionBox")
+    if (aiBox) {
+      aiBox.innerHTML = `<h3>AI Study Advice 🤖</h3><p>🤔 Thinking...</p>`
+    }
+
+    const aiResponse = await gemini.generate(prompt)
+    console.log("[Gemini] AI response received:", aiResponse)
+
+    // Format the response: handle line breaks and markdown
+    const formattedResponse = aiResponse
+      .trim()  // Remove leading/trailing whitespace
+      .replace(/\\n/g, '\n')  // Convert literal \n string to actual newline
+      .replace(/\n\s*\n+/g, '\n')  // Remove empty lines (multiple newlines with optional spaces)
+      .replace(/\n/g, '<br><br>')  // Convert newlines to double br for paragraph spacing
+      .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')  // ***text*** -> bold italic
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // **text** -> bold
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')  // *text* -> italic
+
+    if (aiBox) {
+      aiBox.innerHTML = `<h3>AI Study Advice 🤖</h3><p>${formattedResponse}</p>`
+    } else {
+      // Create box if it doesn't exist
+      const newBox = document.createElement("div")
+      newBox.id = "aiSuggestionBox"
+      newBox.className = "ai-box"
+      newBox.innerHTML = `<h3>AI Study Advice 🤖</h3><p>${formattedResponse}</p>`
+      document.querySelector(".gwa-container")?.appendChild(newBox)
+    }
+  } catch (err) {
+    console.error("[Gemini] Error:", err)
+    const aiBox = document.getElementById("aiSuggestionBox")
+    if (aiBox) {
+      aiBox.innerHTML = `
+        <h3>AI Study Advice 🤖</h3>
+        <p>❌ Could not connect to AI. Please check your internet connection and try again.</p>
+      `
+    }
+  }
 })
 
 // Generate study plan options
@@ -765,11 +832,14 @@ async function loadGoogleClassroomData() {
         turnedIn: isTurnedIn,
         submissionTime: submission?.updateTime || submission?.creationTime,
         creationTime: work.creationTime,
+        assignedGrade: submission?.assignedGrade,
+        draftGrade: submission?.draftGrade,
       }
     })
 
     console.log("[v0] Total assignments fetched:", allAssignments.length)
     await categorizeAssignments()
+    await calculateGradesFromAssignments()
     
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(2)
     console.log(`[Marshal] ✅ Sync completed in ${elapsed}s (${allAssignments.length} assignments)`)
@@ -837,6 +907,77 @@ async function categorizeAssignments() {
 
   console.log(`[Marshal] Categorized: ${urgentTasks.length} urgent, ${missedTasks.length} missed (turned-in assignments excluded)`)
 }
+
+async function calculateGradesFromAssignments() {
+  console.log('[Marshal] Calculating grades from assignments...')
+  
+  // Group assignments by course
+  const courseGrades = {}
+  
+  for (const assignment of allAssignments) {
+    // Only include graded assignments
+    const grade = assignment.assignedGrade ?? assignment.draftGrade
+    const maxPoints = assignment.maxPoints
+    
+    // Skip if no grade or no max points
+    if (grade === undefined || grade === null || !maxPoints || maxPoints === 0) {
+      continue
+    }
+    
+    // Skip if not turned in
+    if (!assignment.turnedIn) {
+      continue
+    }
+    
+    const courseId = assignment.courseId
+    const courseName = assignment.courseName
+    
+    if (!courseGrades[courseId]) {
+      courseGrades[courseId] = {
+        courseName: courseName,
+        assignments: []
+      }
+    }
+    
+    // Calculate percentage for this assignment
+    const percentage = (grade / maxPoints) * 100
+    
+    courseGrades[courseId].assignments.push({
+      title: assignment.title,
+      grade: grade,
+      maxPoints: maxPoints,
+      percentage: percentage
+    })
+  }
+  
+  // Calculate average grade per course
+  const grades = []
+  
+  for (const courseId in courseGrades) {
+    const course = courseGrades[courseId]
+    
+    if (course.assignments.length === 0) {
+      continue
+    }
+    
+    // Calculate average percentage across all graded assignments
+    const totalPercentage = course.assignments.reduce((sum, a) => sum + a.percentage, 0)
+    const averagePercentage = totalPercentage / course.assignments.length
+    
+    grades.push({
+      subject: course.courseName,
+      value: averagePercentage,
+      assignmentCount: course.assignments.length
+    })
+    
+    console.log(`[Marshal] ${course.courseName}: ${averagePercentage.toFixed(2)}% (${course.assignments.length} graded assignments)`)
+  }
+  
+  // Save grades to storage
+  await chrome.storage.local.set({ grades: grades })
+  
+  console.log(`[Marshal] ✅ Calculated grades for ${grades.length} courses`)
+}
 // ===========================
 // GWA PAGE
 // ===========================
@@ -849,12 +990,16 @@ async function loadGrades() {
 
     if (grades.length === 0) {
       document.getElementById("gwaDisplay").textContent = "--"
+      const gradesList = document.getElementById("gradesList")
+      if (gradesList) {
+        gradesList.innerHTML = '<div class="empty-state"><p>No graded assignments found. Sync your Google Classroom data to see grades.</p></div>'
+      }
       return
     }
 
     const total = grades.reduce((sum, grade) => sum + grade.value, 0)
     const gwa = (total / grades.length).toFixed(2)
-    document.getElementById("gwaDisplay").textContent = gwa
+    document.getElementById("gwaDisplay").textContent = `${gwa}%`
 
     const gradesList = document.getElementById("gradesList")
     gradesList.innerHTML = grades
@@ -862,7 +1007,8 @@ async function loadGrades() {
         (grade) => `
       <div class="grade-item">
         <span class="grade-subject">${grade.subject}</span>
-        <span class="grade-value">${grade.value.toFixed(2)}</span>
+        <span class="grade-value">${grade.value.toFixed(2)}%</span>
+        <span class="grade-count">(${grade.assignmentCount || 0} graded)</span>
       </div>
     `,
       )
@@ -871,6 +1017,10 @@ async function loadGrades() {
     console.error("[Marshal] Error loading grades:", error)
   }
 }
+
+// ======== GEMINI AI INTEGRATION ========
+const GEMINI_API_KEY = "AIzaSyBJDBMGMrTeGkLAbqmH3quDg-GbzdH_wqM"
+const gemini = new GeminiClient(GEMINI_API_KEY)
 
 // ===========================
 // STUDY PLANS PAGE
