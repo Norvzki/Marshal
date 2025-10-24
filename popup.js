@@ -187,6 +187,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ===========================
 async function initialize() {
   console.log("[Marshal] Initializing...")
+  
+  // Load dark mode preference first
+  const result = await chrome.storage.local.get("darkMode")
+  if (result.darkMode !== false) {
+    document.body.classList.add('dark-mode')
+  }
+  
   loadDailyQuote()
   loadStudyModeState()
   loadTasks()
@@ -499,8 +506,16 @@ document.getElementById("customSyncInput")?.addEventListener("change", async (e)
 })
 
 document.getElementById("darkModeToggle")?.addEventListener("change", async (e) => {
-  await chrome.storage.local.set({ darkMode: e.target.checked })
-  console.log("[Marshal] Dark mode toggled:", e.target.checked)
+  const isDarkMode = e.target.checked
+  await chrome.storage.local.set({ darkMode: isDarkMode })
+  console.log("[Marshal] Dark mode toggled:", isDarkMode)
+  
+  // Apply dark mode class to body
+  if (isDarkMode) {
+    document.body.classList.add('dark-mode')
+  } else {
+    document.body.classList.remove('dark-mode')
+  }
 })
 
 document.getElementById("exitAccountBtn")?.addEventListener("click", async () => {
@@ -544,6 +559,13 @@ async function loadOptionsPage() {
 
   if (darkModeToggle) {
     darkModeToggle.checked = result.darkMode !== false
+  }
+  
+  // Apply dark mode class to body based on saved preference
+  if (result.darkMode !== false) {
+    document.body.classList.add('dark-mode')
+  } else {
+    document.body.classList.remove('dark-mode')
   }
 
   // Always show manual Sync Now button regardless of auto-sync setting
@@ -1620,14 +1642,16 @@ function openEditModal(index) {
     originalTaskData = null
   }
 
-  document.getElementById("taskNameInput").value = task.title
+  document.getElementById("taskNameInput").value = task.title || ""
   document.getElementById("taskSubjectInput").value = task.subject || ""
-  document.getElementById("taskDateInput").value = task.dueDate
+  // Normalize date to YYYY-MM-DD format for date input
+  const dateValue = task.dueDate ? (task.dueDate.includes('T') ? task.dueDate.split('T')[0] : task.dueDate) : ""
+  document.getElementById("taskDateInput").value = dateValue
   document.getElementById("taskLengthInput").value = task.taskLength || "1 hour"
 
   document.querySelectorAll(".urgency-btn").forEach((btn) => {
     btn.classList.remove("active")
-    if (btn.dataset.urgency === task.urgency) {
+    if (btn.dataset.urgency === (task.urgency || "medium")) {
       btn.classList.add("active")
     }
   })
@@ -1665,18 +1689,26 @@ function closeEditModal() {
 function hasTaskChanged() {
   if (!originalTaskData || editingTaskIndex === null) return false
 
-  const currentName = document.getElementById("taskNameInput").value
-  const currentSubject = document.getElementById("taskSubjectInput").value
+  const currentName = document.getElementById("taskNameInput").value.trim()
+  const currentSubject = document.getElementById("taskSubjectInput").value.trim()
   const currentDate = document.getElementById("taskDateInput").value
   const currentLength = document.getElementById("taskLengthInput").value
-  const currentUrgency = document.querySelector(".urgency-btn.active")?.dataset.urgency
+  const currentUrgency = document.querySelector(".urgency-btn.active")?.dataset.urgency || "medium"
+
+  // Normalize values for comparison (handle undefined/empty string cases)
+  const originalName = (originalTaskData.title || "").trim()
+  const originalSubject = (originalTaskData.subject || "").trim()
+  const originalLength = originalTaskData.taskLength || "1 hour"
+  const originalUrgency = originalTaskData.urgency || "medium"
+  // Normalize date to YYYY-MM-DD format (handle ISO strings)
+  const originalDate = originalTaskData.dueDate ? (originalTaskData.dueDate.includes('T') ? originalTaskData.dueDate.split('T')[0] : originalTaskData.dueDate) : ""
 
   return (
-    currentName !== originalTaskData.title ||
-    currentSubject !== (originalTaskData.subject || "") ||
-    currentDate !== originalTaskData.dueDate ||
-    currentLength !== (originalTaskData.taskLength || "1 hour") ||
-    currentUrgency !== originalTaskData.urgency
+    currentName !== originalName ||
+    currentSubject !== originalSubject ||
+    currentDate !== originalDate ||
+    currentLength !== originalLength ||
+    currentUrgency !== originalUrgency
   )
 }
 
