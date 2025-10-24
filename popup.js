@@ -1416,7 +1416,7 @@ async function loadPlanDetails() {
     document.getElementById("incompleteCountDetail").textContent = incompleteCount
 
     const badge = document.getElementById("planTypeBadge")
-    badge.textContent = plan.type === "manual" ? "Manual" : "AI-Generated"
+    badge.textContent = plan.type === "manual" ? "Manual" : "Automated"
     badge.className = plan.type === "manual" ? "plan-type-badge manual" : "plan-type-badge ai"
 
     const planDetailContainer = document.querySelector(".plan-detail-container")
