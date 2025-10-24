@@ -17,13 +17,20 @@
       <header class="header">
         <div>
           <h1 class="title">Marshal</h1>
-          <p class="subtitle">Your trusty GClassroom AI Assistant</p>
+          <p class="subtitle">Your personal GClassroom secretary</p>
         </div>
         <div class="header-actions">
           <button class="options-icon-btn" id="optionsBtn" title="Settings">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="3"></circle>
-              <path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"></path>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8.3 19.6a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H2a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 3.4 8.3a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H8.6A1.65 1.65 0 0 0 10 2.4V2a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 .33 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V8.6c0 .6.35 1.15.9 1.4H22a2 2 0 1 1 0 4h-.09c-.6.25-1.05.8-1.11 1.4Z"></path>
+            </svg>
+          </button>
+          <button class="options-icon-btn" id="homeSyncBtn" title="Sync Now">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 4v6h-6"/>
+              <path d="M1 20v-6h6"/>
+              <path d="M3.51 9a9 9 0 0114.13-3.36L23 10M1 14l5.36 5.36A9 9 0 0020.49 15"/>
             </svg>
           </button>
           <button class="close-btn" id="closeBtn">✕</button>
@@ -39,14 +46,14 @@
           <button class="study-mode-btn" id="studyModeBtn" data-active="false">
             <span class="status-text">OFF</span>
           </button>
-          <p class="study-mode-label">Enable study mode</p>
+          <p class="study-mode-label">Enable Study Mode</p>
         </div>
       </div>
 
       <div class="focus-mode-section">
   <div class="focus-mode-card" id="viewFocusStatsBtn">
     <div class="focus-mode-info">
-      <h3 class="focus-mode-title">📊 Focus Mode Stats</h3>
+      <h3 class="focus-mode-title">📊 Study Mode Stats</h3>
       <p class="focus-mode-subtitle">View your productivity insights</p>
     </div>
     <div class="focus-mode-arrow">→</div>
@@ -104,8 +111,8 @@
           <h2 class="options-title">How do you want to make your study plan?</h2>
           
           <button class="option-btn" id="aiGenerateBtn">
-            <h3 class="option-btn-title">Generate using AI</h3>
-            <p class="option-btn-subtitle">Automatically create a study plan with AI.</p>
+            <h3 class="option-btn-title">Automatically make a plan</h3>
+            <p class="option-btn-subtitle">Let Marshal create a study plan for you.</p>
           </button>
 
           <button class="option-btn" id="manualGenerateBtn">
@@ -129,7 +136,7 @@
         <button class="back-btn-icon" id="backFromOptionsBtn">←</button>
         <div>
           <h1 class="title">Marshal</h1>
-          <p class="subtitle">Your trusty GClassroom AI Assistant</p>
+          <p class="subtitle">Your personal GClassroom secretary</p>
         </div>
         <button class="close-btn" id="closeBtn">✕</button>
       </header>
@@ -162,53 +169,11 @@
         <div class="options-card-section">
           <div class="section-header-center">
             <h2 class="options-section-title">Synchronization</h2>
-            <p class="options-section-subtitle">Control how and when data is synced</p>
-          </div>
-          
-          <div class="options-setting">
-            <div class="setting-label">
-              <span class="setting-name">Auto-Sync</span>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="autoSyncToggle" checked>
-              <span class="toggle-slider"></span>
-            </label>
+            <p class="options-section-subtitle">Manually sync your data</p>
           </div>
 
-          <!-- Sync Now button appears when Auto-Sync is OFF -->
-          <div class="options-setting sync-now-container hidden" id="syncNowContainer">
+          <div class="options-setting sync-now-container" id="syncNowContainer">
             <button class="sync-now-btn" id="syncNowBtn">Sync Now</button>
-          </div>
-
-          <div class="options-setting">
-            <div class="setting-label">
-              <span class="setting-name">Sync Frequency</span>
-            </div>
-            <select class="sync-frequency-select" id="syncFrequencySelect">
-              <option value="15">Every 15 mins</option>
-              <option value="30" selected>Every 30 mins</option>
-              <option value="60">Every 1 hour</option>
-              <option value="custom">Custom</option>
-            </select>
-          </div>
-
-          <!-- Custom sync frequency input (hidden by default) -->
-          <div class="options-setting custom-sync-container hidden" id="customSyncContainer">
-            <div class="setting-label">
-              <span class="setting-name">Custom Interval (minutes)</span>
-            </div>
-            <div class="custom-sync-input-group">
-              <input type="number" class="custom-sync-input" id="customSyncInput" min="1" max="1440" placeholder="Enter minutes">
-              <button class="custom-sync-save-btn hidden" id="customSyncSaveBtn">Save</button>
-            </div>
-          </div>
-
-          <!-- Added countdown timer display -->
-          <div class="options-setting auto-sync-timer-container hidden" id="autoSyncTimerContainer">
-            <div class="setting-label">
-              <span class="setting-name">Time until next auto-sync:</span>
-            </div>
-            <div class="auto-sync-timer" id="autoSyncTimer">--:--</div>
           </div>
         </div>
 
@@ -259,7 +224,7 @@
       <header class="header">
         <div>
           <h1 class="title">Marshal</h1>
-          <p class="subtitle">Your trusty GClassroom AI Assistant</p>
+          <p class="subtitle">Your personal GClassroom secretary</p>
         </div>
         <button class="close-btn">✕</button>
       </header>
@@ -268,13 +233,6 @@
         <div class="top-bar">
           <div class="title-row">
             <h2 class="page-title">My Study Plans</h2>
-            <button class="icon-btn" id="addPlanBtn">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="16"/>
-                <line x1="8" y1="12" x2="16" y2="12"/>
-              </svg>
-            </button>
           </div>
           <button class="back-btn" data-page="homePage">
             Back to Home
@@ -290,12 +248,6 @@
               <h3 class="section-title">Incomplete</h3>
               <p class="section-count" id="incompleteCount">0 Study Plans</p>
             </div>
-            <button class="expand-btn" id="expandIncomplete">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-            </button>
           </div>
           <div class="section-content" id="incompleteList"></div>
         </div>
@@ -306,12 +258,6 @@
               <h3 class="section-title">Complete</h3>
               <p class="section-count" id="completeCount">0 Study Plans</p>
             </div>
-            <button class="expand-btn" id="expandComplete">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-            </button>
           </div>
           <div class="section-content" id="completeList"></div>
         </div>
@@ -335,7 +281,7 @@
       <header class="header">
         <div>
           <h1 class="title">Marshal</h1>
-          <p class="subtitle">Your trusty GClassroom AI Assistant</p>
+          <p class="subtitle">Your personal GClassroom secretary</p>
         </div>
         <button class="close-btn">✕</button>
       </header>
@@ -362,7 +308,7 @@
       <header class="header">
         <div>
           <h1 class="title">Marshal</h1>
-          <p class="subtitle">Your trusty GClassroom AI Assistant</p>
+          <p class="subtitle">Your personal GClassroom secretary</p>
         </div>
         <button class="close-btn">✕</button>
       </header>
@@ -430,7 +376,7 @@
       <header class="header">
         <div>
           <h1 class="title">Marshal</h1>
-          <p class="subtitle">Your trusty GClassroom AI Assistant</p>
+          <p class="subtitle">Your personal GClassroom secretary</p>
         </div>
         <button class="close-btn">✕</button>
       </header>
@@ -473,13 +419,12 @@
         <div class="plan-controls">
           <div class="sort-control">
             <button class="sort-btn" id="sortBtn">
-              <span>Sort by: <span id="sortLabel">Most Urgent</span></span>
+              <span>Sort by: <span id="sortLabel">Date of Deadline</span></span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M6 9l6 6 6-6"/>
               </svg>
             </button>
             <div class="sort-dropdown" id="sortDropdown">
-              <button class="sort-option" data-sort="urgency">Most Urgent</button>
               <button class="sort-option" data-sort="date">Date of Deadline</button>
               <button class="sort-option" data-sort="subject">Subject</button>
               <button class="sort-option" data-sort="length">Estimated Length of Time</button>
@@ -546,7 +491,6 @@
           </div>
 
           <button type="button" class="save-changes-btn hidden" id="saveChangesBtn">Save Changes</button>
-          <button type="button" class="delete-task-btn" id="deleteTaskBtn">Delete Task</button>
         </form>
       </div>
     </div>
@@ -578,7 +522,7 @@
       <header class="header">
         <button class="back-btn" id="backFromAiNamingBtn">← Back</button>
         <div>
-          <h1 class="page-title">Generate AI Study Plan</h1>
+          <h1 class="page-title">Automatically make a plan</h1>
         </div>
         <button class="close-btn">✕</button>
       </header>
@@ -590,13 +534,14 @@
         </div>
 
         <button class="save-plan-btn" id="generateAiPlanBtn">
-          <span>Generate AI Study Plan</span>
+          <span>Automatically make a plan</span>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- MANAGE BLOCKED SITES PAGE -->
+   <!-- MANAGE BLOCKED SITES PAGE -->
+<!-- MANAGE BLOCKED SITES PAGE - Replace the existing manageSitesPage section -->
 <div class="page hidden" id="manageSitesPage">
   <div class="container">
     <header class="header">
@@ -631,14 +576,14 @@
       <div class="sites-section">
         <h3 class="section-title">Default Blocked Sites</h3>
         <div class="sites-list" id="defaultSitesList">
-          <!-- Default sites will be loaded here -->
+          <!-- Default sites with toggles will be loaded here -->
         </div>
       </div>
 
       <div class="sites-section">
-        <h3 class="section-title">Your Custom Sites</h3>
+        <h3 class="section-title">Customized Blocked Sites</h3>
         <div class="sites-list" id="customSitesList">
-          <!-- Custom sites will be loaded here -->
+          <!-- Custom sites with toggles and delete buttons will be loaded here -->
         </div>
       </div>
     </div>
@@ -651,7 +596,7 @@
     <header class="header">
       <div>
         <h1 class="title">Marshal</h1>
-        <p class="subtitle">Focus Mode Statistics</p>
+        <p class="subtitle">Study Mode Statistics</p>
       </div>
       <button class="close-btn">✕</button>
     </header>
@@ -659,7 +604,7 @@
     <div class="stats-container">
       <div class="stats-header">
         <div class="stats-icon">🎯</div>
-        <h2 class="stats-title">Focus Mode Stats</h2>
+        <h2 class="stats-title">Study Mode Stats</h2>
         <p class="stats-date" id="currentDateStats">Loading...</p>
       </div>
 
@@ -759,7 +704,7 @@
         <img src="icons/marshal-logo.png" alt="Marshal" class="sync-header-logo">
         <div class="sync-header-text">
           <h3 class="sync-header-title">Marshal</h3>
-          <p class="sync-header-subtitle">Your trusty GClassroom AI Assistant</p>
+          <p class="sync-header-subtitle">Your personal GClassroom secretary</p>
         </div>
       </div>
       <button class="sync-close-btn" id="syncCloseBtn">✕</button>
@@ -796,6 +741,34 @@
     </div>
   </div>
 
+  <!-- AI Analysis Modal -->
+  <div class="modal-overlay" id="aiAnalysisModal">
+    <div class="ai-analysis-modal">
+      <!-- Loading State -->
+      <div class="ai-loading" id="aiLoadingState">
+        <div class="spinner"></div>
+        <div class="ai-loading-title">Analyzing Assignment</div>
+        <div class="ai-loading-text">Using AI to break down your task...</div>
+      </div>
+
+      <!-- Results State -->
+      <div class="ai-results" id="aiResultsState" style="display: none;">
+        <div class="ai-header">
+          <div class="ai-title">AI Analysis</div>
+          <button class="modal-close" id="closeAiModal">✕</button>
+        </div>
+        <div class="ai-content" id="aiAnalysisContent">
+          <!-- Content will be populated by JS -->
+        </div>
+        <div class="ai-actions">
+          <button class="btn-secondary" id="closeAiBtn">Close</button>
+          <button class="btn-primary" id="addToPlanBtn">Add to Study Plan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="ai-helpers.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

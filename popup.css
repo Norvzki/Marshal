@@ -12,6 +12,12 @@ body {
   min-height: 600px;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: linear-gradient(135deg, #f5f3ff 0%, #f0f9ff 100%);
+  transition: background 0.3s ease;
+}
+
+/* Dark Mode Body */
+body.dark-mode {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
 }
 
 /* Page system - show/hide pages */
@@ -37,6 +43,16 @@ body {
   margin: 8px;
   border: 1px solid rgba(255, 255, 255, 0.6);
   box-shadow: 0 8px 32px rgba(217, 70, 239, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: all 0.3s ease;
+}
+
+/* Dark Mode Container */
+body.dark-mode .container {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.4) 0%, rgba(31, 41, 55, 0.4) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .header {
@@ -48,6 +64,15 @@ body {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(217, 70, 239, 0.1);
+  transition: all 0.3s ease;
+}
+
+/* Dark Mode Header */
+body.dark-mode .header {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.3) 0%, rgba(31, 41, 55, 0.3) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(75, 85, 99, 0.2);
 }
 
 .title {
@@ -65,6 +90,12 @@ body {
   font-size: 14px;
   color: #1f2937;
   font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Subtitle */
+body.dark-mode .subtitle {
+  color: #d1d5db;
 }
 
 .close-btn {
@@ -79,6 +110,15 @@ body {
 }
 
 .close-btn:hover {
+  color: #d946ef;
+}
+
+/* Dark Mode Close Button */
+body.dark-mode .close-btn {
+  color: #d1d5db;
+}
+
+body.dark-mode .close-btn:hover {
   color: #d946ef;
 }
 
@@ -101,6 +141,21 @@ body {
   transition: all 0.2s;
 }
 
+/* Dark Mode Back Button */
+body.dark-mode .back-btn {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.4) 0%, rgba(31, 41, 55, 0.4) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  color: #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .back-btn:hover {
+  border-color: rgba(217, 70, 239, 0.3);
+  background: rgba(55, 65, 81, 0.6);
+}
+
 .task-entry:hover {
   border-color: rgba(217, 70, 239, 0.3);
   box-shadow: 0 4px 12px rgba(217, 70, 239, 0.1);
@@ -119,6 +174,11 @@ body {
   color: #6b7280;
 }
 
+/* Dark Mode Task Number */
+body.dark-mode .task-number {
+  color: #9ca3af;
+}
+
 .remove-task-btn {
   background: none;
   border: none;
@@ -127,6 +187,21 @@ body {
   cursor: pointer;
   padding: 4px;
   line-height: 1;
+  transition: all 0.2s;
+}
+
+.remove-task-btn:hover {
+  color: #dc2626;
+  transform: scale(1.1);
+}
+
+/* Dark Mode Remove Task Button */
+body.dark-mode .remove-task-btn {
+  color: #ef4444;
+}
+
+body.dark-mode .remove-task-btn:hover {
+  color: #f87171;
 }
 
 .task-input {
@@ -141,12 +216,31 @@ body {
   font-family: inherit;
   margin-bottom: 8px;
   transition: all 0.2s;
+  color: #1f2937;
 }
 
 .task-input:focus {
   outline: none;
   border-color: #d946ef;
   box-shadow: 0 2px 8px rgba(217, 70, 239, 0.1);
+}
+
+/* Dark Mode Task Input */
+body.dark-mode .task-input {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.5) 0%, rgba(31, 41, 55, 0.5) 100%);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  color: #f3f4f6;
+}
+
+body.dark-mode .task-input:focus {
+  border-color: #d946ef;
+  box-shadow: 0 2px 8px rgba(217, 70, 239, 0.15);
+}
+
+body.dark-mode .task-input::placeholder {
+  color: #6b7280;
 }
 
 .task-row {
@@ -160,17 +254,43 @@ body {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 240, 255, 0.9) 100%);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
-  border: 1px solid rgba(229, 231, 235, 0.6);
+  border: 2px solid rgba(229, 231, 235, 0.6);
   border-radius: 8px;
   font-size: 13px;
   font-family: inherit;
   transition: all 0.2s;
+  color: #1f2937;
 }
 
 .task-select:focus {
   outline: none;
   border-color: #d946ef;
   box-shadow: 0 2px 8px rgba(217, 70, 239, 0.1);
+}
+
+.task-select option {
+  background: white;
+  color: #1f2937;
+  padding: 8px;
+}
+
+/* Dark Mode Task Select */
+body.dark-mode .task-select {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.9) 0%, rgba(31, 41, 55, 0.9) 100%);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  color: #f3f4f6;
+}
+
+body.dark-mode .task-select:focus {
+  border-color: #d946ef;
+  box-shadow: 0 2px 8px rgba(217, 70, 239, 0.15);
+}
+
+body.dark-mode .task-select option {
+  background: #1f2937;
+  color: #f3f4f6;
 }
 
 .add-task-btn {
@@ -192,6 +312,22 @@ body {
   border-color: #d946ef;
   color: #d946ef;
   background: linear-gradient(135deg, rgba(253, 244, 255, 0.9) 0%, rgba(248, 240, 255, 0.9) 100%);
+  box-shadow: 0 4px 12px rgba(217, 70, 239, 0.15);
+}
+
+/* Dark Mode Add Task Button */
+body.dark-mode .add-task-btn {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.3) 0%, rgba(31, 41, 55, 0.3) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px dashed rgba(217, 70, 239, 0.3);
+  color: #9ca3af;
+}
+
+body.dark-mode .add-task-btn:hover {
+  border-color: #d946ef;
+  color: #d946ef;
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.5) 0%, rgba(31, 41, 55, 0.5) 100%);
   box-shadow: 0 4px 12px rgba(217, 70, 239, 0.15);
 }
 
@@ -278,6 +414,12 @@ body {
   background: linear-gradient(180deg, rgba(165, 230, 255, 0.4) 0%, rgba(200, 240, 255, 0.2) 100%);
   border-radius: 20px;
   margin: 16px;
+  transition: background 0.3s ease;
+}
+
+/* Dark Mode Plan Detail Container */
+body.dark-mode .plan-detail-container {
+  background: transparent;
 }
 
 .plan-header-top {
@@ -328,6 +470,18 @@ body {
   background: rgba(255, 255, 255, 0.9);
 }
 
+/* Dark Mode Icon Action Button */
+body.dark-mode .icon-action-btn {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.4) 0%, rgba(31, 41, 55, 0.4) 100%);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  color: #9ca3af;
+}
+
+body.dark-mode .icon-action-btn:hover {
+  border-color: rgba(217, 70, 239, 0.3);
+  background: rgba(55, 65, 81, 0.6);
+}
+
 .delete-plan-btn:hover {
   color: #dc2626;
   border-color: rgba(220, 38, 38, 0.3);
@@ -346,6 +500,12 @@ body {
   line-height: 1.2;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Plan Title */
+body.dark-mode .plan-title {
+  color: #e5e7eb;
 }
 
 .plan-meta-info {
@@ -359,12 +519,20 @@ body {
   font-size: 13px;
   color: #6b7280;
   font-weight: 500;
+  transition: color 0.3s ease;
 }
 
 .plan-duration {
   font-size: 13px;
   color: #6b7280;
   font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Plan Meta */
+body.dark-mode .plan-created,
+body.dark-mode .plan-duration {
+  color: #9ca3af;
 }
 
 .plan-stats {
@@ -384,12 +552,14 @@ body {
   border-radius: 20px;
   padding: 12px 20px;
   min-width: 100px;
+  transition: all 0.3s ease;
 }
 
 .stat-number {
   font-size: 20px;
   font-weight: 700;
   color: #1f2937;
+  transition: color 0.3s ease;
 }
 
 .stat-label {
@@ -397,6 +567,22 @@ body {
   color: #6b7280;
   font-weight: 500;
   text-transform: lowercase;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Stat Badge */
+body.dark-mode .stat-badge {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.5) 0%, rgba(17, 24, 39, 0.5) 100%);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+}
+
+body.dark-mode .stat-number {
+  color: #e5e7eb;
+}
+
+body.dark-mode .stat-label {
+  color: #9ca3af;
 }
 
 .plan-controls {
@@ -435,6 +621,19 @@ body {
   background: rgba(255, 255, 255, 0.9);
 }
 
+/* Dark Mode Sort Button */
+body.dark-mode .sort-btn {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.4) 0%, rgba(31, 41, 55, 0.4) 100%);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  color: #d1d5db;
+}
+
+body.dark-mode .sort-btn:hover {
+  border-color: rgba(217, 70, 239, 0.3);
+  background: rgba(55, 65, 81, 0.6);
+}
+
 .sort-dropdown {
   position: absolute;
   top: 100%;
@@ -449,6 +648,7 @@ body {
   display: none;
   z-index: 100;
   box-shadow: 0 8px 24px rgba(217, 70, 239, 0.15);
+  transition: all 0.3s ease;
 }
 
 .sort-dropdown.active {
@@ -477,6 +677,24 @@ body {
   color: #d946ef;
 }
 
+/* Dark Mode Sort Dropdown */
+body.dark-mode .sort-dropdown {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.95) 0%, rgba(31, 41, 55, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .sort-option {
+  color: #d1d5db;
+  border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+body.dark-mode .sort-option:hover {
+  background: rgba(217, 70, 239, 0.1);
+  color: #d946ef;
+}
+
 .back-to-plans-btn {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 240, 255, 0.8) 100%);
   backdrop-filter: blur(10px);
@@ -494,6 +712,19 @@ body {
 .back-to-plans-btn:hover {
   border-color: rgba(217, 70, 239, 0.3);
   background: rgba(255, 255, 255, 0.9);
+}
+
+/* Dark Mode Back to Plans Button */
+body.dark-mode .back-to-plans-btn {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.4) 0%, rgba(31, 41, 55, 0.4) 100%);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  color: #e5e7eb;
+}
+
+body.dark-mode .back-to-plans-btn:hover {
+  border-color: rgba(217, 70, 239, 0.3);
+  background: rgba(55, 65, 81, 0.6);
 }
 
 .tasks-container {
@@ -522,14 +753,50 @@ body {
 }
 
 .task-item.completed {
-  opacity: 0.6;
+  opacity: 0.7;
   filter: blur(0.5px);
-  background: linear-gradient(135deg, rgba(230, 243, 230, 0.9) 0%, rgba(122, 207, 160, 0.9) 100%);
+  background: linear-gradient(135deg, rgba(220, 252, 231, 0.6) 0%, rgba(187, 247, 208, 0.6) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(34, 197, 94, 0.3);
 }
 
 .task-item.completed .task-name {
   text-decoration: line-through;
   color: #9ca3af;
+}
+
+/* Dark Mode Completed Task - Make text white for visibility */
+body.dark-mode .task-item.completed .task-name {
+  color: #ffffff;
+  text-decoration: line-through;
+}
+
+/* Dark Mode Task Item */
+body.dark-mode .task-item {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.4) 0%, rgba(31, 41, 55, 0.4) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .task-item:hover {
+  border-color: #d946ef;
+  box-shadow: 0 4px 12px rgba(217, 70, 239, 0.15);
+}
+
+body.dark-mode .task-item.completed {
+  opacity: 0.7;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.2) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(34, 197, 94, 0.3);
+}
+
+body.dark-mode .task-item.completed .task-name {
+  color: #ffffff !important;
+  text-decoration: line-through;
 }
 
 .task-content {
@@ -551,6 +818,7 @@ body {
   font-weight: 600;
   color: #1f2937;
   flex: 1;
+  transition: color 0.3s ease;
 }
 
 .task-meta {
@@ -559,6 +827,16 @@ body {
   gap: 8px;
   font-size: 13px;
   color: #6b7280;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Task Text */
+body.dark-mode .task-name {
+  color: #f3f4f6;
+}
+
+body.dark-mode .task-meta {
+  color: #d1d5db;
 }
 
 .task-meta-item {
@@ -645,6 +923,31 @@ body {
   color: #10b981;
 }
 
+/* Dark Mode Task Action Buttons */
+body.dark-mode .task-action-btn {
+  color: #9ca3af;
+}
+
+body.dark-mode .task-action-btn:hover {
+  background: rgba(217, 70, 239, 0.1);
+  color: #d946ef;
+}
+
+body.dark-mode .task-action-btn.edit:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+body.dark-mode .task-action-btn.delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+body.dark-mode .task-action-btn.done:hover {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
 /* ===========================
    MODAL STYLES
    =========================== */
@@ -660,6 +963,13 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+/* Dark Mode Modal Overlay */
+body.dark-mode .modal-overlay {
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.6) 0%, rgba(31, 41, 55, 0.6) 100%);
+  backdrop-filter: blur(12px);
 }
 
 .modal-overlay.active,
@@ -698,6 +1008,16 @@ body {
   max-width: 380px;
   box-shadow: 0 20px 60px rgba(100, 100, 200, 0.2);
   animation: popUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.3s ease;
+}
+
+/* Dark Mode Edit Modal */
+body.dark-mode .edit-modal {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.95) 0%, rgba(31, 41, 55, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
 }
 
 .modal-header {
@@ -711,6 +1031,7 @@ body {
   font-size: 20px;
   font-weight: 700;
   color: #1f2937;
+  transition: color 0.3s ease;
 }
 
 .modal-close {
@@ -725,6 +1046,19 @@ body {
 
 .modal-close:hover {
   color: #374151;
+}
+
+/* Dark Mode Modal Header */
+body.dark-mode .modal-title {
+  color: #f3f4f6;
+}
+
+body.dark-mode .modal-close {
+  color: #9ca3af;
+}
+
+body.dark-mode .modal-close:hover {
+  color: #d1d5db;
 }
 
 .edit-form {
@@ -767,6 +1101,17 @@ body {
   border-color: rgba(217, 70, 239, 0.3);
 }
 
+/* Dark Mode Urgency Buttons */
+body.dark-mode .urgency-btn {
+  background: rgba(55, 65, 81, 0.5);
+  border: 2px solid rgba(75, 85, 99, 0.4);
+  color: #9ca3af;
+}
+
+body.dark-mode .urgency-btn:hover {
+  border-color: rgba(217, 70, 239, 0.3);
+}
+
 .urgency-btn.high {
   background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
   color: #dc2626;
@@ -788,6 +1133,33 @@ body {
 .urgency-btn.active {
   border-color: currentColor;
   box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.1);
+}
+
+/* Dark Mode Active Urgency Buttons - Keep colors visible */
+body.dark-mode .urgency-btn.high.active,
+body.dark-mode .urgency-btn.high {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.5);
+}
+
+body.dark-mode .urgency-btn.medium.active,
+body.dark-mode .urgency-btn.medium {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #d97706;
+  border-color: rgba(217, 119, 6, 0.5);
+}
+
+body.dark-mode .urgency-btn.low.active,
+body.dark-mode .urgency-btn.low {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #16a34a;
+  border-color: rgba(22, 163, 74, 0.5);
+}
+
+body.dark-mode .urgency-btn.active {
+  border-color: currentColor;
+  box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.15);
 }
 
 .delete-task-btn {
@@ -1009,6 +1381,12 @@ body {
   height: 60px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 240, 255, 0.95) 100%);
   border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  transition: background 0.3s ease;
+}
+
+/* Dark Mode Hero Section */
+body.dark-mode .hero-section::after {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.4) 0%, rgba(31, 41, 55, 0.4) 100%);
 }
 
 .quote-container {
@@ -1077,6 +1455,12 @@ body {
   color: #6b7280;
   letter-spacing: 0.5px;
   margin-bottom: 12px;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Section Title */
+body.dark-mode .section-title {
+  color: #9ca3af;
 }
 
 .button-group {
@@ -1112,12 +1496,29 @@ body {
   -webkit-backdrop-filter: blur(10px);
   color: #6b7280;
   border: 2px solid rgba(229, 231, 235, 0.6);
+  transition: all 0.2s;
 }
 
 .plan-btn-secondary:hover {
   border-color: #d946ef;
   color: #374151;
   background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 12px rgba(217, 70, 239, 0.15);
+}
+
+/* Dark Mode Secondary Button */
+body.dark-mode .plan-btn-secondary {
+  background: rgba(55, 65, 81, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #d1d5db;
+  border: 2px solid rgba(75, 85, 99, 0.4);
+}
+
+body.dark-mode .plan-btn-secondary:hover {
+  border-color: #d946ef;
+  color: #e5e7eb;
+  background: rgba(55, 65, 81, 0.6);
   box-shadow: 0 4px 12px rgba(217, 70, 239, 0.15);
 }
 
@@ -1147,6 +1548,20 @@ body {
   box-shadow: 0 6px 16px rgba(217, 70, 239, 0.15);
 }
 
+/* Dark Mode Task Card */
+body.dark-mode .task-card {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.3) 0%, rgba(31, 41, 55, 0.3) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .task-card:hover {
+  border-color: rgba(217, 70, 239, 0.3);
+  box-shadow: 0 6px 16px rgba(217, 70, 239, 0.15);
+}
+
 .task-header {
   display: flex;
   justify-content: space-between;
@@ -1159,6 +1574,12 @@ body {
   font-weight: 700;
   color: #6b7280;
   letter-spacing: 0.5px;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Task Title */
+body.dark-mode .task-title {
+  color: #9ca3af;
 }
 
 .nav-btn {
@@ -1199,17 +1620,61 @@ body {
   font-size: 13px;
   color: #374151;
   padding: 8px;
+  padding-left: 12px;
   background: linear-gradient(135deg, rgba(249, 250, 251, 0.8) 0%, rgba(243, 244, 246, 0.8) 100%);
   border-radius: 8px;
   line-height: 1.4;
+  transition: all 0.3s ease;
+  position: relative;
+  border-left: 4px solid transparent;
+}
+
+/* Urgency color streaks */
+.task-item.urgent-high {
+  border-left-color: #dc2626;
+}
+
+.task-item.urgent-medium {
+  border-left-color: #d97706;
+}
+
+.task-item.urgent-low {
+  border-left-color: #16a34a;
+}
+
+/* Dark Mode Task Item */
+body.dark-mode .task-item {
+  color: #d1d5db;
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.5) 0%, rgba(17, 24, 39, 0.5) 100%);
 }
 
 .task-item.urgent {
-  border-left: 3px solid #ef4444;
+  border-left: 4px solid #ef4444;
 }
 
 .task-item.missed {
-  border-left: 3px solid #f59e0b;
+  border-left: 4px solid #f59e0b;
+}
+
+/* Ensure urgency borders show in dark mode */
+body.dark-mode .task-item.urgent {
+  border-left: 4px solid #ef4444;
+}
+
+body.dark-mode .task-item.missed {
+  border-left: 4px solid #f59e0b;
+}
+
+body.dark-mode .task-item.urgent-high {
+  border-left: 4px solid #dc2626;
+}
+
+body.dark-mode .task-item.urgent-medium {
+  border-left: 4px solid #d97706;
+}
+
+body.dark-mode .task-item.urgent-low {
+  border-left: 4px solid #16a34a;
 }
 
 .gwa-card {
@@ -1264,10 +1729,20 @@ body {
   padding: 28px 24px 24px;
   box-shadow: 0 20px 60px rgba(217, 70, 239, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
   z-index: 10;
+  transition: all 0.3s ease;
 }
 
 .options-card.active {
   display: block;
+}
+
+/* Dark Mode Options Card */
+body.dark-mode .options-card {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.4) 0%, rgba(31, 41, 55, 0.4) 100%);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 }
 
 .options-title {
@@ -1276,6 +1751,12 @@ body {
   color: #6b7280;
   margin-bottom: 20px;
   line-height: 1.5;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Options Title */
+body.dark-mode .options-title {
+  color: #9ca3af;
 }
 
 .option-btn {
@@ -1306,12 +1787,35 @@ body {
   box-shadow: 0 6px 20px rgba(217, 70, 239, 0.25);
 }
 
+/* Dark Mode Option Button */
+body.dark-mode .option-btn {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.3) 0%, rgba(31, 41, 55, 0.3) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(75, 85, 99, 0.4);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .option-btn:hover {
+  border-color: rgba(217, 70, 239, 0.5);
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.5) 0%, rgba(31, 41, 55, 0.5) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(217, 70, 239, 0.15);
+}
+
+body.dark-mode .option-btn.selected {
+  border-color: #d946ef;
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.6) 0%, rgba(31, 41, 55, 0.6) 100%);
+  box-shadow: 0 6px 20px rgba(217, 70, 239, 0.25);
+}
+
 .option-btn-title {
   font-size: 18px;
   font-weight: 700;
   color: #1f2937;
   margin-bottom: 6px;
   line-height: 1.3;
+  transition: color 0.3s ease;
 }
 
 .option-btn-subtitle {
@@ -1319,6 +1823,11 @@ body {
   font-weight: 500;
   color: #d946ef;
   line-height: 1.5;
+}
+
+/* Dark Mode Option Button Text */
+body.dark-mode .option-btn-title {
+  color: #e5e7eb;
 }
 
 .generate-btn {
@@ -1436,6 +1945,12 @@ body {
   font-size: 24px;
   font-weight: 700;
   color: #1f2937;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Page Title */
+body.dark-mode .page-title {
+  color: #e5e7eb;
 }
 
 .icon-btn {
@@ -1452,6 +1967,15 @@ body {
 
 .icon-btn:hover {
   color: #374151;
+}
+
+/* Dark Mode Icon Button */
+body.dark-mode .icon-btn {
+  color: #9ca3af;
+}
+
+body.dark-mode .icon-btn:hover {
+  color: #d1d5db;
 }
 
 .section {
@@ -1486,6 +2010,24 @@ body {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 240, 255, 0.98) 100%);
 }
 
+/* Dark Mode Section */
+body.dark-mode .section {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.3) 0%, rgba(31, 41, 55, 0.3) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .section:hover {
+  border-color: rgba(217, 70, 239, 0.3);
+  box-shadow: 0 6px 16px rgba(217, 70, 239, 0.15);
+}
+
+body.dark-mode .section.expanded {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.98) 0%, rgba(17, 24, 39, 0.98) 100%);
+}
+
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -1493,6 +2035,12 @@ body {
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid rgba(229, 231, 235, 0.6);
+  transition: border-color 0.3s ease;
+}
+
+/* Dark Mode Section Header */
+body.dark-mode .section-header {
+  border-bottom: 1px solid rgba(75, 85, 99, 0.3);
 }
 
 .section-title {
@@ -1500,12 +2048,23 @@ body {
   font-weight: 700;
   color: #374151;
   margin-bottom: 4px;
+  transition: color 0.3s ease;
 }
 
 .section-count {
   font-size: 13px;
   color: #9ca3af;
   font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Section Title & Count */
+body.dark-mode .section-title {
+  color: #d1d5db;
+}
+
+body.dark-mode .section-count {
+  color: #6b7280;
 }
 
 .expand-btn {
@@ -1522,6 +2081,15 @@ body {
 
 .expand-btn:hover {
   color: #374151;
+}
+
+/* Dark Mode Expand Button */
+body.dark-mode .expand-btn {
+  color: #9ca3af;
+}
+
+body.dark-mode .expand-btn:hover {
+  color: #d1d5db;
 }
 
 .expand-btn.expanded svg {
@@ -1553,9 +2121,26 @@ body {
   transform: translateY(-2px);
 }
 
+/* Dark Mode Plan Card */
+body.dark-mode .plan-card {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.4) 0%, rgba(31, 41, 55, 0.4) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .plan-card:hover {
+  border-color: #d946ef;
+  box-shadow: 0 6px 16px rgba(217, 70, 239, 0.15);
+  transform: translateY(-2px);
+}
+
 /* Added styling for completed study plans with green gradient */
 .plan-card.completed {
-  background: linear-gradient(135deg, rgba(220, 252, 231, 0.9) 0%, rgba(187, 247, 208, 0.9) 100%);
+  background: linear-gradient(135deg, rgba(220, 252, 231, 0.6) 0%, rgba(187, 247, 208, 0.6) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-color: rgba(34, 197, 94, 0.3);
 }
 
@@ -1565,6 +2150,23 @@ body {
 }
 
 .plan-card.completed:hover {
+  border-color: #22c55e;
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.15);
+}
+
+/* Dark Mode Completed Plan Card */
+body.dark-mode .plan-card.completed {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.2) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+body.dark-mode .plan-card.completed .plan-card-title {
+  color: #6b7280;
+}
+
+body.dark-mode .plan-card.completed:hover {
   border-color: #22c55e;
   box-shadow: 0 6px 16px rgba(34, 197, 94, 0.15);
 }
@@ -1582,6 +2184,12 @@ body {
   color: #1f2937;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Plan Card Title */
+body.dark-mode .plan-card-title {
+  color: #e5e7eb;
 }
 
 .plan-card-badge {
@@ -1619,12 +2227,20 @@ body {
   font-size: 12px;
   color: #6b7280;
   font-weight: 500;
+  transition: color 0.3s ease;
 }
 
 .plan-card-tasks {
   font-size: 12px;
   color: #6b7280;
   font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Plan Card Details */
+body.dark-mode .plan-card-date,
+body.dark-mode .plan-card-tasks {
+  color: #9ca3af;
 }
 
 .delete-btn {
@@ -1643,15 +2259,30 @@ body {
   color: #ef4444;
 }
 
+/* Dark Mode Delete Button */
+body.dark-mode .delete-btn {
+  color: #6b7280;
+}
+
+body.dark-mode .delete-btn:hover {
+  color: #ef4444;
+}
+
 .empty-state {
   text-align: center;
   padding: 40px 20px;
   color: #9ca3af;
+  transition: color 0.3s ease;
 }
 
 .empty-state-text {
   font-size: 14px;
   font-weight: 500;
+}
+
+/* Dark Mode Empty State */
+body.dark-mode .empty-state {
+  color: #6b7280;
 }
 
 /* ===========================
@@ -1685,6 +2316,7 @@ body {
   font-weight: 700;
   color: #1f2937;
   margin-bottom: 8px;
+  transition: color 0.3s ease;
 }
 
 .task-item-subject {
@@ -1692,12 +2324,41 @@ body {
   color: #6b7280;
   font-weight: 500;
   margin-bottom: 4px;
+  transition: color 0.3s ease;
 }
 
 .task-item-due {
   font-size: 12px;
   color: #9ca3af;
   font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Task Item Card */
+body.dark-mode .task-item-card {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.4) 0%, rgba(31, 41, 55, 0.4) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .task-item-card:hover {
+  border-color: #d946ef;
+  box-shadow: 0 6px 16px rgba(217, 70, 239, 0.15);
+  transform: translateY(-2px);
+}
+
+body.dark-mode .task-item-title {
+  color: #f3f4f6;
+}
+
+body.dark-mode .task-item-subject {
+  color: #d1d5db;
+}
+
+body.dark-mode .task-item-due {
+  color: #9ca3af;
 }
 
 /* ===========================
@@ -1713,6 +2374,7 @@ body {
   font-weight: 600;
   color: #374151;
   margin-bottom: 8px;
+  transition: color 0.3s ease;
 }
 
 .form-input {
@@ -1727,12 +2389,42 @@ body {
   font-family: inherit;
   transition: all 0.2s;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  color: #1f2937;
 }
 
 .form-input:focus {
   outline: none;
   border-color: #d946ef;
   box-shadow: 0 4px 12px rgba(217, 70, 239, 0.15);
+}
+
+/* Dark Mode Form Elements */
+body.dark-mode .form-label {
+  color: #d1d5db;
+}
+
+body.dark-mode .form-input {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.4) 0%, rgba(31, 41, 55, 0.4) 100%);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  color: #f3f4f6;
+}
+
+body.dark-mode .form-input:focus {
+  border-color: #d946ef;
+  box-shadow: 0 4px 12px rgba(217, 70, 239, 0.15);
+}
+
+body.dark-mode .form-input::placeholder {
+  color: #6b7280;
+}
+
+/* Dark Mode Form Input Select Options */
+body.dark-mode .form-input option {
+  background: #1f2937;
+  color: #f3f4f6;
 }
 
 .tasks-list-form {
@@ -1749,7 +2441,17 @@ body {
   border: 2px solid rgba(229, 231, 235, 0.6);
   border-radius: 12px;
   padding: 16px;
-  box-shadow: 0 2px 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+
+/* Dark Mode Task Entry */
+body.dark-mode .task-entry {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.4) 0%, rgba(31, 41, 55, 0.4) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* ===========================
@@ -1775,12 +2477,23 @@ body {
   font-weight: 700;
   color: #1f2937;
   margin-bottom: 8px;
+  transition: color 0.3s ease;
 }
 
 .stats-date {
   font-size: 14px;
   color: #6b7280;
   font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Stats Header */
+body.dark-mode .stats-title {
+  color: #e5e7eb;
+}
+
+body.dark-mode .stats-date {
+  color: #9ca3af;
 }
 
 .stats-grid {
@@ -1805,6 +2518,20 @@ body {
   box-shadow: 0 6px 16px rgba(217, 70, 239, 0.12);
 }
 
+/* Dark Mode Stat Card */
+body.dark-mode .stat-card {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.4) 0%, rgba(31, 41, 55, 0.4) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(217, 70, 239, 0.15);
+}
+
 .stat-icon-small {
   font-size: 32px;
   margin-bottom: 8px;
@@ -1827,6 +2554,7 @@ body {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  transition: color 0.3s ease;
 }
 
 .section-title-small {
@@ -1836,11 +2564,30 @@ body {
   margin-bottom: 16px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Stat Labels */
+body.dark-mode .stat-label-small,
+body.dark-mode .section-title-small {
+  color: #9ca3af;
 }
 
 .chart-container {
   position: relative;
   margin-bottom: 12px;
+  background: transparent;
+  padding: 12px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+/* Dark Mode Chart Container */
+body.dark-mode .chart-container {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.3) 0%, rgba(17, 24, 39, 0.3) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(75, 85, 99, 0.2);
 }
 
 .chart-bars {
@@ -1877,6 +2624,12 @@ body {
   color: #6b7280;
   text-align: center;
   margin-top: 8px;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Chart Labels */
+body.dark-mode .chart-label {
+  color: #9ca3af;
 }
 
 .week-stats {
@@ -1903,12 +2656,26 @@ body {
   font-size: 14px;
   color: #374151;
   font-weight: 500;
+  transition: color 0.3s ease;
 }
 
 .week-stat-value {
   font-size: 16px;
   color: #d946ef;
   font-weight: 700;
+}
+
+/* Dark Mode Week Stats */
+body.dark-mode .week-stat-row {
+  background: rgba(31, 41, 55, 0.5);
+}
+
+body.dark-mode .week-stat-row:hover {
+  background: rgba(31, 41, 55, 0.7);
+}
+
+body.dark-mode .week-stat-label {
+  color: #d1d5db;
 }
 
 .blocked-sites-list {
@@ -1937,6 +2704,7 @@ body {
   font-weight: 700;
   color: #6b7280;
   min-width: 24px;
+  transition: color 0.3s ease;
 }
 
 .site-info {
@@ -1948,6 +2716,25 @@ body {
   font-weight: 600;
   color: #1f2937;
   margin-bottom: 4px;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Blocked Sites */
+body.dark-mode .blocked-site-item {
+  background: rgba(31, 41, 55, 0.5);
+}
+
+body.dark-mode .blocked-site-item:hover {
+  background: rgba(31, 41, 55, 0.7);
+  transform: translateX(4px);
+}
+
+body.dark-mode .site-rank {
+  color: #9ca3af;
+}
+
+body.dark-mode .site-name {
+  color: #e5e7eb;
 }
 
 .site-bar-container {
@@ -2005,6 +2792,16 @@ body {
   border: 2px solid rgba(229, 231, 235, 0.6);
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(217, 70, 239, 0.08);
+  transition: all 0.3s ease;
+}
+
+/* Dark Mode Add Site Section */
+body.dark-mode .add-site-section {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.4) 0%, rgba(31, 41, 55, 0.4) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .add-site-form {
@@ -2019,6 +2816,12 @@ body {
   color: #6b7280;
   line-height: 1.5;
   font-style: italic;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Help Text */
+body.dark-mode .help-text {
+  color: #9ca3af;
 }
 
 .sites-section {
@@ -2031,14 +2834,15 @@ body {
   gap: 8px;
 }
 
+/*change here*/
 .site-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 16px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 240, 255, 0.9) 100%);
   border: 2px solid rgba(229, 231, 235, 0.6);
-  border-radius: 12px;
+  border-radius: 16px;
   transition: all 0.2s;
 }
 
@@ -2053,39 +2857,12 @@ body {
 
 .site-item.disabled {
   opacity: 0.5;
-  background: linear-gradient(135deg, rgba(254, 226, 226, 0.5) 0%, rgba(254, 202, 202, 0.5) 100%);
+  background: linear-gradient(135deg, rgba(243, 244, 246, 0.9) 0%, rgba(249, 250, 251, 0.9) 100%);
 }
 
 .site-item.disabled .site-name {
-  text-decoration: line-through;
   color: #9ca3af;
-}
-
-.toggle-site-btn {
-  padding: 6px 16px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.toggle-site-btn:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  transform: scale(1.05);
-}
-
-.site-item.disabled .toggle-site-btn {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-}
-
-.site-item.disabled .toggle-site-btn:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  text-decoration: line-through;
 }
 
 .site-icon {
@@ -2097,37 +2874,67 @@ body {
   font-size: 15px;
   font-weight: 600;
   color: #1f2937;
+  transition: color 0.3s ease;
 }
 
-.site-badge {
-  padding: 4px 12px;
-  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-  color: white;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+/* Dark Mode Site Item */
+body.dark-mode .site-item {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.4) 0%, rgba(31, 41, 55, 0.4) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(75, 85, 99, 0.3);
 }
 
-.remove-site-btn {
+body.dark-mode .site-item:hover {
+  border-color: rgba(217, 70, 239, 0.3);
+  box-shadow: 0 4px 12px rgba(217, 70, 239, 0.1);
+}
+
+body.dark-mode .site-item.default {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.5) 0%, rgba(17, 24, 39, 0.5) 100%);
+}
+
+body.dark-mode .site-item.disabled {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.3) 0%, rgba(17, 24, 39, 0.3) 100%);
+}
+
+body.dark-mode .site-name {
+  color: #e5e7eb;
+}
+
+body.dark-mode .site-item.disabled .site-name {
+  color: #6b7280;
+}
+
+/* NEW - Controls container */
+.site-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* NEW - Delete button for custom sites */
+.delete-site-btn {
   background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
   border: none;
   color: #dc2626;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
-.remove-site-btn:hover {
+.delete-site-btn:hover {
   background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
+
+/*end of the change*/
 
 /* ===========================
    TASK LINK STYLES
@@ -2176,18 +2983,32 @@ body {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 240, 255, 0.9) 100%);
   border: 2px solid rgba(229, 231, 235, 0.6);
   border-radius: 16px;
-  padding: 16px;
+  padding: 16px 20px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   box-shadow: 0 4px 12px rgba(217, 70, 239, 0.08);
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   cursor: pointer;
 }
 
 .focus-mode-card:hover {
   border-color: rgba(217, 70, 239, 0.3);
   box-shadow: 0 6px 16px rgba(217, 70, 239, 0.12);
+}
+
+/* Dark Mode Focus Card */
+body.dark-mode .focus-mode-card {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.3) 0%, rgba(31, 41, 55, 0.3) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .focus-mode-card:hover {
+  border-color: rgba(217, 70, 239, 0.3);
+  box-shadow: 0 6px 16px rgba(217, 70, 239, 0.15);
 }
 
 .focus-mode-info {
@@ -2199,11 +3020,22 @@ body {
   font-weight: 700;
   color: #1f2937;
   margin-bottom: 4px;
+  transition: color 0.3s ease;
 }
 
 .focus-mode-subtitle {
   font-size: 13px;
   color: #6b7280;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Focus Text */
+body.dark-mode .focus-mode-title {
+  color: #e5e7eb;
+}
+
+body.dark-mode .focus-mode-subtitle {
+  color: #9ca3af;
 }
 
 .focus-mode-arrow {
@@ -2655,6 +3487,16 @@ body {
   background: rgba(217, 70, 239, 0.1);
 }
 
+/* Dark Mode Options Icon Button */
+body.dark-mode .options-icon-btn {
+  color: #9ca3af;
+}
+
+body.dark-mode .options-icon-btn:hover {
+  color: #d946ef;
+  background: rgba(217, 70, 239, 0.1);
+}
+
 .back-btn-icon {
   background: none;
   border: none;
@@ -2676,6 +3518,16 @@ body {
   background: rgba(217, 70, 239, 0.1);
 }
 
+/* Dark Mode Back Button Icon */
+body.dark-mode .back-btn-icon {
+  color: #9ca3af;
+}
+
+body.dark-mode .back-btn-icon:hover {
+  color: #d946ef;
+  background: rgba(217, 70, 239, 0.1);
+}
+
 .options-container {
   padding: 24px;
   display: flex;
@@ -2684,6 +3536,12 @@ body {
   background: linear-gradient(180deg, rgba(165, 230, 255, 0.4) 0%, rgba(200, 240, 255, 0.2) 100%);
   border-radius: 20px;
   margin: 16px;
+  transition: background 0.3s ease;
+}
+
+/* Dark Mode Options Container */
+body.dark-mode .options-container {
+  background: transparent;
 }
 
 .options-card-section {
@@ -2700,6 +3558,20 @@ body {
 .options-card-section:hover {
   border-color: rgba(217, 70, 239, 0.3);
   box-shadow: 0 12px 40px rgba(217, 70, 239, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* Dark Mode Options Card Section */
+body.dark-mode .options-card-section {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.3) 0%, rgba(31, 41, 55, 0.3) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .options-card-section:hover {
+  border-color: rgba(217, 70, 239, 0.3);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 /* User Profile Card */
@@ -2751,6 +3623,12 @@ body {
   font-weight: 700;
   color: #1f2937;
   margin: 0;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode User Name */
+body.dark-mode .user-name {
+  color: #e5e7eb;
 }
 
 .exit-icon-btn {
@@ -2771,11 +3649,27 @@ body {
   background: rgba(217, 70, 239, 0.1);
 }
 
+/* Dark Mode Exit Icon Button */
+body.dark-mode .exit-icon-btn {
+  color: #9ca3af;
+}
+
+body.dark-mode .exit-icon-btn:hover {
+  color: #d946ef;
+  background: rgba(217, 70, 239, 0.1);
+}
+
 .user-email {
   font-size: 13px;
   color: #6b7280;
   margin: 0;
   font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode User Email */
+body.dark-mode .user-email {
+  color: #9ca3af;
 }
 
 .sync-status-btn {
@@ -2809,6 +3703,7 @@ body {
   color: #1f2937;
   margin: 0 0 4px 0;
   line-height: 1.2;
+  transition: color 0.3s ease;
 }
 
 .options-section-subtitle {
@@ -2816,6 +3711,16 @@ body {
   color: #6b7280;
   margin: 0;
   font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Options Section Text */
+body.dark-mode .options-section-title {
+  color: #e5e7eb;
+}
+
+body.dark-mode .options-section-subtitle {
+  color: #9ca3af;
 }
 
 /* Settings */
@@ -2842,6 +3747,19 @@ body {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(248, 240, 255, 0.7) 100%);
 }
 
+/* Dark Mode Options Setting */
+body.dark-mode .options-setting {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.4) 0%, rgba(17, 24, 39, 0.4) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+body.dark-mode .options-setting:hover {
+  border-color: rgba(217, 70, 239, 0.2);
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.5) 0%, rgba(17, 24, 39, 0.5) 100%);
+}
+
 .setting-label {
   display: flex;
   flex-direction: column;
@@ -2852,11 +3770,22 @@ body {
   font-size: 15px;
   font-weight: 600;
   color: #1f2937;
+  transition: color 0.3s ease;
 }
 
 .setting-description {
   font-size: 12px;
   color: #9ca3af;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Setting Text */
+body.dark-mode .setting-name {
+  color: #e5e7eb;
+}
+
+body.dark-mode .setting-description {
+  color: #6b7280;
 }
 
 /* Toggle Switch */
@@ -2925,6 +3854,18 @@ body {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 240, 255, 0.95) 100%);
 }
 
+/* Dark Mode Sync Frequency Select */
+body.dark-mode .sync-frequency-select {
+  border: 2px solid rgba(75, 85, 99, 0.4);
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.5) 0%, rgba(17, 24, 39, 0.5) 100%);
+  color: #d1d5db;
+}
+
+body.dark-mode .sync-frequency-select:hover {
+  border-color: rgba(217, 70, 239, 0.3);
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.6) 0%, rgba(17, 24, 39, 0.6) 100%);
+}
+
 .sync-frequency-select:focus {
   outline: none;
   border-color: #a855f7;
@@ -2989,44 +3930,452 @@ body {
   display: none !important;
 }
 
-/* Style Save button to match Sync Now button */
-.custom-sync-save-btn {
-  background: linear-gradient(135deg, #a855f7 0%, #9333ea 50%, #7e22ce 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 8px 16px;
-  font-size: 14px;
+/* ===========================
+   AI ANALYSIS MODAL STYLES
+   =========================== */
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-overlay.show {
+  display: flex;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* AI Analysis Modal */
+.ai-analysis-modal {
+  background: white;
+  border-radius: 20px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: popUp 0.3s ease-out;
+}
+
+/* Dark Mode AI Analysis Modal */
+body.dark-mode .ai-analysis-modal {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.95) 0%, rgba(31, 41, 55, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* Loading State */
+.ai-loading {
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.ai-loading .spinner {
+  width: 60px;
+  height: 60px;
+  border: 5px solid #f3f4f6;
+  border-top: 5px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.ai-loading-title {
+  font-size: 20px;
   font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.ai-loading-text {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Dark Mode AI Loading */
+body.dark-mode .ai-loading-title {
+  color: #f3f4f6;
+}
+
+body.dark-mode .ai-loading-text {
+  color: #9ca3af;
+}
+
+body.dark-mode .ai-loading .spinner {
+  border: 5px solid rgba(75, 85, 99, 0.3);
+  border-top: 5px solid #d946ef;
+}
+
+/* Results State */
+.ai-results {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.ai-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ai-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
   cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+  padding: 4px 8px;
+  transition: color 0.2s;
 }
 
-.custom-sync-save-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(168, 85, 247, 0.4);
+.modal-close:hover {
+  color: #1f2937;
 }
 
-.custom-sync-save-btn:active {
-  transform: translateY(0);
+/* Dark Mode AI Header */
+body.dark-mode .ai-header {
+  border-bottom: 1px solid rgba(75, 85, 99, 0.3);
 }
 
-/* Add timer display styling */
-.auto-sync-timer-container {
+body.dark-mode .ai-title {
+  color: #f3f4f6;
+}
+
+body.dark-mode .modal-close {
+  color: #9ca3af;
+}
+
+body.dark-mode .modal-close:hover {
+  color: #f3f4f6;
+}
+
+.ai-content {
+  flex: 1 1 auto;
+  padding: 20px 24px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Override inline styles for dark mode */
+body.dark-mode .ai-content h3 {
+  color: #f3f4f6 !important;
+}
+
+body.dark-mode .ai-content p {
+  color: #d1d5db !important;
+}
+
+.ai-section {
+  margin-bottom: 20px;
+}
+
+.ai-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 12px;
+}
+
+.ai-summary {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.6;
+  background: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+/* Dark Mode AI Section */
+body.dark-mode .ai-section-title {
+  color: #f3f4f6 !important;
+}
+
+body.dark-mode .ai-summary {
+  background: rgba(31, 41, 55, 0.5);
+  color: #d1d5db !important;
+}
+
+.ai-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.ai-badge {
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge-urgency-high {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.badge-urgency-medium {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.badge-urgency-low {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.badge-time {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.ai-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ai-step {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.ai-step .step-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #3b82f6;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.ai-step .step-info {
+  flex: 1;
+}
+
+.ai-step .step-title {
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.ai-step .step-desc {
+  font-size: 13px;
+  color: #374151;
+  margin-top: 4px;
+}
+
+.ai-step .step-time {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* Dark Mode AI Steps */
+body.dark-mode .ai-step {
+  background: rgba(31, 41, 55, 0.5);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+body.dark-mode .ai-step .step-number {
+  background: #d946ef;
+}
+
+body.dark-mode .ai-step .step-title {
+  color: #f3f4f6;
+}
+
+body.dark-mode .ai-step .step-desc {
+  color: #d1d5db;
+}
+
+body.dark-mode .ai-step .step-time {
+  color: #9ca3af;
+}
+
+.ai-tips {
+  list-style: none;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.auto-sync-timer {
-  font-size: 24px;
-  font-weight: 700;
-  color: #a855f7;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
-  text-align: center;
-  padding: 12px;
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+.ai-tip {
+  padding: 10px 12px 10px 32px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.5;
+  position: relative;
+}
+
+.ai-tip::before {
+  content: '💡';
+  position: absolute;
+  left: 10px;
+  top: 10px;
+}
+
+/* Dark Mode AI Tips */
+body.dark-mode .ai-tip {
+  background: rgba(31, 41, 55, 0.5);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  color: #d1d5db;
+}
+
+.ai-recommendation {
+  padding: 16px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
   border-radius: 12px;
-  border: 2px solid rgba(168, 85, 247, 0.2);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.ai-actions {
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 12px;
+}
+
+.btn-primary,
+.btn-secondary {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #d946ef 0%, #c026d3 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(217, 70, 239, 0.4);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.7);
+  border: 2px solid rgba(229, 231, 235, 0.6);
+  color: #374151;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Dark Mode AI Actions */
+body.dark-mode .ai-actions {
+  border-top: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+body.dark-mode .btn-secondary {
+  background: rgba(55, 65, 81, 0.5);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  color: #d1d5db;
+}
+
+body.dark-mode .btn-secondary:hover {
+  background: rgba(55, 65, 81, 0.7);
+  border-color: rgba(217, 70, 239, 0.3);
+}
+
+/* Small Analyze Task button */
+.analyze-btn.small {
+  display: inline-block;
+  margin-top: 12px;
+  margin-left: 8px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 8px;
+  border: 2px solid rgba(229, 231, 235, 0.8);
+  color: #374151;
+  background: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: all 0.2s;
+  vertical-align: middle;
+}
+
+.analyze-btn.small:hover {
+  border-color: rgba(217, 70, 239, 0.5);
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Dark Mode Analyze Button */
+body.dark-mode .analyze-btn.small {
+  border: 2px solid rgba(75, 85, 99, 0.4);
+  color: #d1d5db;
+  background: rgba(55, 65, 81, 0.4);
+}
+
+body.dark-mode .analyze-btn.small:hover {
+  border-color: rgba(217, 70, 239, 0.5);
+  background: rgba(55, 65, 81, 0.6);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }

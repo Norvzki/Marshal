@@ -71,11 +71,6 @@ async function updateSyncStatus() {
   }
 }
 
-// Global variables for AI analysis state
-let currentAnalyzedTask = null
-let lastAiAnalysis = null
-let aiSourcePage = null
-
 // Declare originalShowPage here to fix linting error
 const originalShowPage = (pageId) => {
   document.querySelectorAll(".page").forEach((page) => {
@@ -187,13 +182,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ===========================
 async function initialize() {
   console.log("[Marshal] Initializing...")
-  
-  // Load dark mode preference first
-  const result = await chrome.storage.local.get("darkMode")
-  if (result.darkMode !== false) {
-    document.body.classList.add('dark-mode')
-  }
-  
   loadDailyQuote()
   loadStudyModeState()
   loadTasks()
@@ -444,6 +432,7 @@ document.getElementById("syncNowBtn")?.addEventListener("click", async () => {
   }
   hideSyncLoadingScreen()
 })
+
 // Home page Sync button
 document.getElementById("homeSyncBtn")?.addEventListener("click", async () => {
   if (isSyncing) {
@@ -506,16 +495,8 @@ document.getElementById("customSyncInput")?.addEventListener("change", async (e)
 })
 
 document.getElementById("darkModeToggle")?.addEventListener("change", async (e) => {
-  const isDarkMode = e.target.checked
-  await chrome.storage.local.set({ darkMode: isDarkMode })
-  console.log("[Marshal] Dark mode toggled:", isDarkMode)
-  
-  // Apply dark mode class to body
-  if (isDarkMode) {
-    document.body.classList.add('dark-mode')
-  } else {
-    document.body.classList.remove('dark-mode')
-  }
+  await chrome.storage.local.set({ darkMode: e.target.checked })
+  console.log("[Marshal] Dark mode toggled:", e.target.checked)
 })
 
 document.getElementById("exitAccountBtn")?.addEventListener("click", async () => {
@@ -559,13 +540,6 @@ async function loadOptionsPage() {
 
   if (darkModeToggle) {
     darkModeToggle.checked = result.darkMode !== false
-  }
-  
-  // Apply dark mode class to body based on saved preference
-  if (result.darkMode !== false) {
-    document.body.classList.add('dark-mode')
-  } else {
-    document.body.classList.remove('dark-mode')
   }
 
   // Always show manual Sync Now button regardless of auto-sync setting
@@ -1052,21 +1026,10 @@ async function loadUrgentTasksPage() {
           <p class="task-item-subject">${task.subject || "No subject"}</p>
           <p class="task-item-due">Due: ${dueDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
           ${task.link ? `<a href="${task.link}" class="view-in-classroom-btn" target="_blank">View in Google Classroom →</a>` : ""}
-          <button class="analyze-btn small" data-index="0">Analyze Task</button>
         </div>
       `
       })
       .join("")
-
-    // Attach analyze handlers using closure over tasks
-    document.querySelectorAll("#urgentTasksListPage .analyze-btn").forEach((btn, idx) => {
-      btn.dataset.index = String(idx)
-      btn.addEventListener("click", () => {
-        const t = tasks[idx]
-        aiSourcePage = 'urgentTasksPage'
-        analyzeTask(t)
-      })
-    })
   } catch (error) {
     console.error("[Marshal] Error loading urgent tasks:", error)
   }
@@ -1100,21 +1063,10 @@ async function loadMissedTasksPage() {
           <p class="task-item-subject">${task.subject || "No subject"}</p>
           <p class="task-item-due">Due: ${dueDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
           ${task.link ? `<a href="${task.link}" class="view-in-classroom-btn" target="_blank">View in Google Classroom →</a>` : ""}
-          <button class="analyze-btn small" data-index="0">Analyze Task</button>
         </div>
       `
       })
       .join("")
-
-    // Attach analyze handlers using closure over tasks
-    document.querySelectorAll("#missedTasksListPage .analyze-btn").forEach((btn, idx) => {
-      btn.dataset.index = String(idx)
-      btn.addEventListener("click", () => {
-        const t = tasks[idx]
-        aiSourcePage = 'missedTasksPage'
-        analyzeTask(t)
-      })
-    })
   } catch (error) {
     console.error("[Marshal] Error loading missed tasks:", error)
   }
@@ -1642,16 +1594,14 @@ function openEditModal(index) {
     originalTaskData = null
   }
 
-  document.getElementById("taskNameInput").value = task.title || ""
+  document.getElementById("taskNameInput").value = task.title
   document.getElementById("taskSubjectInput").value = task.subject || ""
-  // Normalize date to YYYY-MM-DD format for date input
-  const dateValue = task.dueDate ? (task.dueDate.includes('T') ? task.dueDate.split('T')[0] : task.dueDate) : ""
-  document.getElementById("taskDateInput").value = dateValue
+  document.getElementById("taskDateInput").value = task.dueDate
   document.getElementById("taskLengthInput").value = task.taskLength || "1 hour"
 
   document.querySelectorAll(".urgency-btn").forEach((btn) => {
     btn.classList.remove("active")
-    if (btn.dataset.urgency === (task.urgency || "medium")) {
+    if (btn.dataset.urgency === task.urgency) {
       btn.classList.add("active")
     }
   })
@@ -1689,26 +1639,18 @@ function closeEditModal() {
 function hasTaskChanged() {
   if (!originalTaskData || editingTaskIndex === null) return false
 
-  const currentName = document.getElementById("taskNameInput").value.trim()
-  const currentSubject = document.getElementById("taskSubjectInput").value.trim()
+  const currentName = document.getElementById("taskNameInput").value
+  const currentSubject = document.getElementById("taskSubjectInput").value
   const currentDate = document.getElementById("taskDateInput").value
   const currentLength = document.getElementById("taskLengthInput").value
-  const currentUrgency = document.querySelector(".urgency-btn.active")?.dataset.urgency || "medium"
-
-  // Normalize values for comparison (handle undefined/empty string cases)
-  const originalName = (originalTaskData.title || "").trim()
-  const originalSubject = (originalTaskData.subject || "").trim()
-  const originalLength = originalTaskData.taskLength || "1 hour"
-  const originalUrgency = originalTaskData.urgency || "medium"
-  // Normalize date to YYYY-MM-DD format (handle ISO strings)
-  const originalDate = originalTaskData.dueDate ? (originalTaskData.dueDate.includes('T') ? originalTaskData.dueDate.split('T')[0] : originalTaskData.dueDate) : ""
+  const currentUrgency = document.querySelector(".urgency-btn.active")?.dataset.urgency
 
   return (
-    currentName !== originalName ||
-    currentSubject !== originalSubject ||
-    currentDate !== originalDate ||
-    currentLength !== originalLength ||
-    currentUrgency !== originalUrgency
+    currentName !== originalTaskData.title ||
+    currentSubject !== (originalTaskData.subject || "") ||
+    currentDate !== originalTaskData.dueDate ||
+    currentLength !== (originalTaskData.taskLength || "1 hour") ||
+    currentUrgency !== originalTaskData.urgency
   )
 }
 
@@ -1872,157 +1814,6 @@ document.getElementById("confirmationModal")?.addEventListener("click", (e) => {
     document.getElementById("confirmationModal").classList.remove("active")
     deletingTaskIndex = null
     deletingPlanId = null
-  }
-})
-
-// ===========================
-// AI ANALYSIS (Analyze Task -> Modal + Add to Plan)
-// ===========================
-
-async function analyzeTask(task) {
-  try {
-    currentAnalyzedTask = task
-    const modal = document.getElementById('aiAnalysisModal')
-    const loadingState = document.getElementById('aiLoadingState')
-    const resultsState = document.getElementById('aiResultsState')
-    const content = document.getElementById('aiAnalysisContent')
-    if (!content) return
-    // Show modal with loading state
-    if (modal) modal.classList.add('show')
-    if (loadingState) loadingState.style.display = 'block'
-    if (resultsState) resultsState.style.display = 'none'
-
-    const analysis = await analyzeAssignment(task)
-    displayAnalysisResults(analysis, task)
-  } catch (err) {
-    console.error('[Marshal] Analyze failed:', err)
-    alert('Failed to analyze assignment. Please try again.')
-    document.getElementById('aiAnalysisModal')?.classList.remove('show')
-    currentAnalyzedTask = null
-  }
-}
-
-function displayAnalysisResults(analysis, task) {
-  const loadingState = document.getElementById('aiLoadingState')
-  const resultsState = document.getElementById('aiResultsState')
-  const content = document.getElementById('aiAnalysisContent')
-  if (!content) return
-
-  lastAiAnalysis = analysis
-
-  const stepsHTML = (analysis.breakdown || []).map((step, i) => `
-    <div class="ai-step">
-      <div class="step-number">${i + 1}</div>
-      <div class="step-info">
-        <div class="step-title">${step.step}</div>
-        <div class="step-desc">${step.description}</div>
-        <div class="step-time">⏰ ${step.estimatedTime}</div>
-      </div>
-    </div>
-  `).join('')
-
-  const tipsHTML = ((analysis.strategy && analysis.strategy.tips) || []).map((tip) => `
-    <li class="ai-tip">${tip}</li>
-  `).join('')
-
-  const urgency = analysis.urgency || 'medium'
-  const urgencyClass = `badge-urgency-${urgency}`
-
-  content.innerHTML = `
-    <h3 style="font-size: 18px; font-weight: 700; color: #1f2937; margin-bottom: 8px;">${task.title || 'Assignment'}</h3>
-    <div class="ai-summary">${analysis.summary || 'AI analysis generated successfully.'}</div>
-    <div class="ai-badges">
-      <span class="ai-badge ${urgencyClass}">⚡ ${(urgency || 'medium').toUpperCase()}</span>
-      <span class="ai-badge badge-time">⏰ ${analysis.totalTimeEstimate || 'Variable'}</span>
-    </div>
-    <div class="ai-section">
-      <div class="ai-section-title">📝 What To Do</div>
-      <div class="ai-steps">${stepsHTML || '<p>No steps available</p>'}</div>
-    </div>
-    <div class="ai-section">
-      <div class="ai-section-title">💡 Strategy & Tips</div>
-      <p style="font-size: 14px; color: #374151; line-height: 1.6; margin-bottom: 12px;">${(analysis.strategy && analysis.strategy.approach) || 'Break the work into manageable chunks and stay focused.'}</p>
-      <ul class="ai-tips">${tipsHTML || '<li class="ai-tip">Work in focused sessions</li>'}</ul>
-    </div>
-    <div class="ai-section">
-      <div class="ai-section-title">⏰ Recommendation</div>
-      <div class="ai-recommendation">${analysis.recommendedStartTime || 'Start as soon as possible to ensure quality work.'}</div>
-    </div>
-  `
-
-  if (loadingState) loadingState.style.display = 'none'
-  if (resultsState) resultsState.style.display = 'flex'
-}
-
-function closeAiModal() {
-  const modal = document.getElementById('aiAnalysisModal')
-  modal?.classList.remove('show')
-  currentAnalyzedTask = null
-  lastAiAnalysis = null
-  // Navigate back to originating list page if known
-  if (aiSourcePage) {
-    showPage(aiSourcePage)
-  }
-  aiSourcePage = null
-}
-
-async function addAnalyzedTaskToPlan() {
-  if (!currentAnalyzedTask) return
-  try {
-    const analysis = lastAiAnalysis || await analyzeAssignment(currentAnalyzedTask)
-    const planTasks = (analysis.breakdown || []).map((step) => ({
-      title: `${currentAnalyzedTask.title} - ${step.step}`,
-      subject: currentAnalyzedTask.subject || 'General',
-      dueDate: currentAnalyzedTask.dueDate,
-      taskLength: step.estimatedTime,
-      urgency: analysis.urgency || 'medium',
-      completed: false,
-    }))
-    const studyPlan = {
-      id: Date.now(),
-      title: `${currentAnalyzedTask.title} - AI Plan`,
-      createdAt: new Date().toISOString(),
-      tasks: planTasks,
-      schedule: planTasks.map((t) => ({
-        task: t.title,
-        date: t.dueDate ? new Date(t.dueDate).toLocaleDateString() : new Date().toLocaleDateString(),
-        duration: t.taskLength,
-        priority: (analysis.urgency || 'medium') === 'high' ? 'High' : 'Medium',
-        completed: false,
-      })),
-      type: 'ai',
-      completed: false,
-    }
-    const result = await chrome.storage.local.get('studyPlans')
-    const plans = result.studyPlans || []
-    plans.unshift(studyPlan)
-    await chrome.storage.local.set({ studyPlans: plans })
-    closeAiModal()
-    alert('Study plan created! 🎉')
-    setTimeout(() => showPage('studyPlansPage'), 300)
-  } catch (err) {
-    console.error('[Marshal] Error adding analyzed plan:', err)
-    alert('Failed to create study plan.')
-  }
-}
-
-// Use delegation to ensure handlers are bound regardless of render timing
-document.addEventListener('click', (e) => {
-  const el = e.target
-  if (!(el instanceof Element)) return
-  if (el.closest('#closeAiModal') || el.closest('#closeAiBtn')) {
-    e.preventDefault()
-    closeAiModal()
-    return
-  }
-  if (el.closest('#addToPlanBtn')) {
-    e.preventDefault()
-    addAnalyzedTaskToPlan()
-    return
-  }
-  if (el.id === 'aiAnalysisModal') {
-    // click outside modal content closes
-    closeAiModal()
   }
 })
 
@@ -2207,130 +1998,68 @@ function renderBlockedSitesList(blockedSites) {
     .join("")
 }
 // ===========================
-// MANAGE BLOCKED SITES PAGE - IMPROVED LOGIC
-// Replace the existing loadBlockedSites() function in popup.js
+// MANAGE BLOCKED SITES PAGE
 // ===========================
-
 async function loadBlockedSites() {
   const response = await chrome.runtime.sendMessage({ action: "getBlockedSites" })
   const defaultSites = response.default || []
   const customSites = response.custom || []
-  const disabledDefaultSites = response.disabledDefault || []
-  const disabledCustomSites = response.disabledCustom || []
+  // Read disabled defaults from local storage so removal persists in UI
+  const storage = await chrome.storage.local.get(["disabledDefault"]) 
+  const disabledDefault = storage.disabledDefault || []
 
-  // Render Default Blocked Sites
+  // Build combined list: enabled defaults + custom
+  const defaultSitesToShow = defaultSites.filter((s) => !disabledDefault.includes(s))
+  const combinedSites = [
+    ...defaultSitesToShow.map((s) => ({ site: s, kind: "default" })),
+    ...customSites.map((s) => ({ site: s, kind: "custom" })),
+  ]
+
+  // Render into the custom list container as a unified list
   const defaultContainer = document.getElementById("defaultSitesList")
-  if (defaultSites.length === 0) {
-    defaultContainer.innerHTML = '<div class="empty-state"><p>No default sites available</p></div>'
-  } else {
-    defaultContainer.innerHTML = defaultSites
-      .map((site) => {
-        const isDisabled = disabledDefaultSites.includes(site)
-        const disabledClass = isDisabled ? 'disabled' : ''
-        const checkedAttr = isDisabled ? '' : 'checked'
-        
-        return `
-          <div class="site-item default ${disabledClass}">
-            <span class="site-icon">🔒</span>
-            <span class="site-name">${site}</span>
-            <div class="site-controls">
-              <label class="toggle-switch">
-                <input type="checkbox" class="default-site-toggle" data-site="${site}" ${checkedAttr}>
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-        `
-      })
-      .join("")
+  if (defaultContainer) defaultContainer.innerHTML = ""
 
-    // Attach event listeners for default site toggles
-    document.querySelectorAll(".default-site-toggle").forEach((toggle) => {
-      toggle.addEventListener("change", async (e) => {
-        const site = e.target.dataset.site
-        const isEnabled = e.target.checked
-        
-        if (isEnabled) {
-          // Enable the site (remove from disabled list)
-          await chrome.runtime.sendMessage({ action: "enableDefaultSite", site })
-        } else {
-          // Disable the site (add to disabled list)
-          await chrome.runtime.sendMessage({ action: "disableDefaultSite", site })
-        }
-        
-        // Reload to update UI
-        loadBlockedSites()
-      })
-    })
-  }
-
-  // Render Customized Blocked Sites
   const customContainer = document.getElementById("customSitesList")
-  if (customSites.length === 0) {
-    customContainer.innerHTML = '<div class="empty-state"><p>No custom sites yet</p></div>'
+  if (combinedSites.length === 0) {
+    customContainer.innerHTML = '<div class="empty-state"><p>No blocked sites yet</p></div>'
   } else {
-    customContainer.innerHTML = customSites
-      .map((site) => {
-        const isDisabled = disabledCustomSites.includes(site)
-        const disabledClass = isDisabled ? 'disabled' : ''
-        const checkedAttr = isDisabled ? '' : 'checked'
-        
+    customContainer.innerHTML = combinedSites
+      .map(({ site, kind }) => {
+        const icon = kind === "default" ? "🔒" : "🚫"
         return `
-          <div class="site-item custom ${disabledClass}">
-            <span class="site-icon">🚫</span>
+          <div class="site-item ${kind}">
+            <span class="site-icon">${icon}</span>
             <span class="site-name">${site}</span>
-            <div class="site-controls">
-              <button class="delete-site-btn" data-site="${site}">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                </svg>
-              </button>
-              <label class="toggle-switch">
-                <input type="checkbox" class="custom-site-toggle" data-site="${site}" ${checkedAttr}>
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
+            <button class="remove-site-btn" data-kind="${kind}" data-site="${site}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
         `
       })
       .join("")
 
-    // Attach event listeners for custom site delete buttons
-    document.querySelectorAll(".delete-site-btn").forEach((btn) => {
+    document.querySelectorAll(".remove-site-btn").forEach((btn) => {
       btn.addEventListener("click", async (e) => {
         const site = e.currentTarget.dataset.site
-        
-        // Confirm deletion
-        if (confirm(`Are you sure you want to permanently delete "${site}" from your blocked sites?`)) {
+        const kind = e.currentTarget.dataset.kind
+        if (kind === "custom") {
           await chrome.runtime.sendMessage({ action: "removeCustomSite", site })
-          showNotification(`${site} removed from blocked list`, "success")
-          loadBlockedSites()
-        }
-      })
-    })
-
-    // Attach event listeners for custom site toggles
-    document.querySelectorAll(".custom-site-toggle").forEach((toggle) => {
-      toggle.addEventListener("change", async (e) => {
-        const site = e.target.dataset.site
-        const isEnabled = e.target.checked
-        
-        if (isEnabled) {
-          // Enable the site
-          await chrome.runtime.sendMessage({ action: "enableCustomSite", site })
         } else {
-          // Disable the site (temporarily)
-          await chrome.runtime.sendMessage({ action: "disableCustomSite", site })
+          const current = (await chrome.storage.local.get(["disabledDefault"]))?.disabledDefault || []
+          const next = Array.from(new Set([...current, site]))
+          await chrome.storage.local.set({ disabledDefault: next })
+          try { await chrome.runtime.sendMessage({ action: "disableDefaultSite", site }) } catch {}
         }
-        
-        // Reload to update UI
         loadBlockedSites()
       })
     })
   }
+  // Removed toggle handlers; only X remove buttons remain
 }
 
-// Keep existing add site button handler
 document.getElementById("addSiteBtn")?.addEventListener("click", async () => {
   const input = document.getElementById("newSiteInput")
   let site = input.value.trim()
