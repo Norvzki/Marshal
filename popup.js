@@ -280,17 +280,25 @@ async function loadStudyModeState() {
   const result = await chrome.storage.local.get("studyModeActive")
   const isActive = result.studyModeActive || false
   const studyModeBtn = document.getElementById("studyModeBtn")
+  const studyModeLabel = document.querySelector(".study-mode-label")
   studyModeBtn.dataset.active = isActive
   studyModeBtn.querySelector(".status-text").textContent = isActive ? "ON" : "OFF"
+  if (studyModeLabel) {
+    studyModeLabel.textContent = isActive ? "Study Mode Enabled" : "Study Mode Disabled"
+  }
 }
 
 document.getElementById("studyModeBtn")?.addEventListener("click", async () => {
   const studyModeBtn = document.getElementById("studyModeBtn")
+  const studyModeLabel = document.querySelector(".study-mode-label")
   const isActive = studyModeBtn.dataset.active === "true"
   const newState = !isActive
 
   studyModeBtn.dataset.active = newState
   studyModeBtn.querySelector(".status-text").textContent = newState ? "ON" : "OFF"
+  if (studyModeLabel) {
+    studyModeLabel.textContent = newState ? "Study Mode Enabled" : "Study Mode Disabled"
+  }
 
   await chrome.storage.local.set({ studyModeActive: newState })
   chrome.runtime.sendMessage({ action: "toggleStudyMode", active: newState })

@@ -35,44 +35,49 @@ body.dark-mode {
 .container {
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 240, 255, 0.95) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   border-radius: 24px;
-  overflow: hidden;
+  overflow: visible;
   margin: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 8px 32px rgba(217, 70, 239, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: none;
+  box-shadow: none;
   transition: all 0.3s ease;
 }
 
 /* Dark Mode Container */
 body.dark-mode .container {
-  background: linear-gradient(135deg, rgba(55, 65, 81, 0.4) 0%, rgba(31, 41, 55, 0.4) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(75, 85, 99, 0.3);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  box-shadow: none;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 240, 255, 0.8) 100%);
+  padding: 20px 24px 30px 24px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 240, 255, 0.95) 100%);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(217, 70, 239, 0.1);
+  border-bottom: none;
+  border-radius: 0 0 50% 50% / 0 0 30px 30px;
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 }
 
 /* Dark Mode Header */
 body.dark-mode .header {
-  background: linear-gradient(135deg, rgba(55, 65, 81, 0.3) 0%, rgba(31, 41, 55, 0.3) 100%);
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.95) 0%, rgba(31, 41, 55, 0.95) 100%);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(75, 85, 99, 0.2);
+  border-bottom: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .title {
@@ -1353,13 +1358,19 @@ body.dark-mode .urgency-btn.active {
    =========================== */
 .hero-section {
   position: relative;
-  background: url("https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80") center / cover;
-  padding: 40px 24px 80px;
-  min-height: 320px;
+  height: 400px;
+  background-image: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=2560&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  padding-top: 150px;
+  margin-bottom: 20px;
+  margin-top: -100px;
+  z-index: 1;
+  box-shadow: none;
 }
 
 .hero-section::before {
@@ -1378,15 +1389,16 @@ body.dark-mode .urgency-btn.active {
   bottom: -1px;
   left: 0;
   right: 0;
-  height: 60px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 240, 255, 0.95) 100%);
-  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  height: 80px;
+  background: #f3f4f6;
+  border-radius: 50% 50% 0 0 / 60px 60px 0 0;
+  box-shadow: none;
   transition: background 0.3s ease;
 }
 
 /* Dark Mode Hero Section */
 body.dark-mode .hero-section::after {
-  background: linear-gradient(135deg, rgba(55, 65, 81, 0.4) 0%, rgba(31, 41, 55, 0.4) 100%);
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
 }
 
 .quote-container {
@@ -1394,6 +1406,7 @@ body.dark-mode .hero-section::after {
   z-index: 1;
   text-align: center;
   padding: 0 20px;
+  margin-bottom: auto;
 }
 
 .quote {
@@ -1405,13 +1418,15 @@ body.dark-mode .hero-section::after {
 }
 
 .study-mode-container {
-  position: relative;
-  z-index: 1;
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  margin-top: 40px;
+  gap: 8px;
 }
 
 .study-mode-btn {
@@ -3089,6 +3104,19 @@ body.dark-mode .focus-mode-subtitle {
   font-weight: 700;
   padding: 4px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.study-mode-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4b5563;
+  text-shadow: none;
+  transition: color 0.3s ease;
+}
+
+/* Dark Mode Study Mode Label */
+body.dark-mode .study-mode-label {
+  color: #e5e7eb;
 }
 
 /* Empty chart state */
