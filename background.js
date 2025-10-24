@@ -155,7 +155,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ 
       default: DEFAULT_BLOCKED_SITES,
       custom: customBlockedSites,
-      disabledDefault: disabledDefaultSites
+      disabledDefault: disabledDefaultSites,
+      disabledCustom: disabledCustomSites
     })
     return true
   }

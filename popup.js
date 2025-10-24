@@ -2184,6 +2184,7 @@ async function loadBlockedSites() {
   const defaultSites = response.default || []
   const customSites = response.custom || []
   const disabledDefaultSites = response.disabledDefault || []
+  const disabledCustomSites = response.disabledCustom || []
 
   // Render Default Blocked Sites
   const defaultContainer = document.getElementById("defaultSitesList")
@@ -2238,8 +2239,12 @@ async function loadBlockedSites() {
   } else {
     customContainer.innerHTML = customSites
       .map((site) => {
+        const isDisabled = disabledCustomSites.includes(site)
+        const disabledClass = isDisabled ? 'disabled' : ''
+        const checkedAttr = isDisabled ? '' : 'checked'
+        
         return `
-          <div class="site-item custom">
+          <div class="site-item custom ${disabledClass}">
             <span class="site-icon">🚫</span>
             <span class="site-name">${site}</span>
             <div class="site-controls">
@@ -2249,7 +2254,7 @@ async function loadBlockedSites() {
                 </svg>
               </button>
               <label class="toggle-switch">
-                <input type="checkbox" class="custom-site-toggle" data-site="${site}" checked>
+                <input type="checkbox" class="custom-site-toggle" data-site="${site}" ${checkedAttr}>
                 <span class="toggle-slider"></span>
               </label>
             </div>
