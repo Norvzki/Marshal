@@ -44,6 +44,7 @@ Marshal is a Chrome extension that helps students stay organized and focused by 
    - Click the Marshal icon in your browser
    - Sign in with your Google account
    - Grant Google Classroom permissions
+   - Click the refresh button in the top right of the extension
    - Wait for initial sync (30-60 seconds)
 
 ---
@@ -157,3 +158,4 @@ Thanks to Google Classroom API, Chrome Extensions Documentation, Cebu Hacktoberf
 ⭐ **Star us on GitHub if Marshal helps you!** ⭐
 
 </div>
+
